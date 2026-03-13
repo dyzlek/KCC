@@ -1,0 +1,213 @@
+{% extends "layout.njk" %}
+
+{% block mainClass %}relative{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Force dark background for select options on all platforms */
+    #review-sort {
+        background-color: rgba(255, 255, 255, 0.05);
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1.25rem;
+        padding-right: 2.5rem;
+    }
+    #review-sort option {
+        background-color: #1a1a1a;
+        color: white;
+    }
+</style>
+
+<!-- PROFILE HERO (Shortened) -->
+<div class="relative h-[180px] w-full">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-900 to-purple-900">
+        {% if profileUser.banner_url %}
+            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ profileUser.banner_url }}')"></div>
+            <div class="absolute inset-0 bg-black/60"></div>
+        {% else %}
+            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30"></div>
+        {% endif %}
+    </div>
+    
+    <div class="absolute inset-0 flex items-end">
+        <div class="container mx-auto px-4 lg:px-10 pb-6 flex items-center gap-6">
+            <a href="/profile/{{ profileUser.id }}" class="flex-shrink-0 group">
+                <div class="w-20 h-20 rounded-full border-2 border-white/20 overflow-hidden relative">
+                    {% if profileUser.avatar_url %}
+                        <img src="{{ profileUser.avatar_url }}" alt="{{ profileUser.username }}" class="w-full h-full object-cover group-hover:opacity-80 transition-opacity">
+                    {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-xl font-bold text-white">
+                            {{ profileUser.username[0] | upper }}
+                        </div>
+                    {% endif %}
+                </div>
+            </a>
+            <div>
+                <h1 class="text-3xl font-black text-white leading-none">
+                    {{ "My" if isOwnProfile else profileUser.username + "'s" }} 
+                    Reviews
+                </h1>
+                <div class="text-sm font-bold text-text-muted mt-1 uppercase tracking-wide">
+                    {{ reviews.length }} Reviews
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 lg:px-10 py-8">
+    
+    <div class="bg-card-bg rounded-xl border border-white/5 overflow-hidden">
+        
+        <!-- Toolbar -->
+        <div class="bg-white/5 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-white/5">
+            <div class="flex items-center gap-4 w-full md:w-auto">
+               <a href="/profile/{{ profileUser.id }}" class="text-text-muted hover:text-white transition-colors flex items-center gap-1 text-sm font-bold shrink-0">
+                    <span class="material-icons text-base">arrow_back</span> Back
+               </a>
+               <div class="h-6 w-px bg-white/10 hidden md:block"></div>
+               <div class="relative w-full md:w-64 group">
+                   <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors text-lg">search</span>
+                   <input type="text" id="review-search" placeholder="Search game or content..." class="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-white/20">
+               </div>
+            </div>
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <span class="text-xs font-bold text-text-muted uppercase tracking-wider hidden sm:block">Sort By:</span>
+                <select id="review-sort" class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-primary outline-none transition-all cursor-pointer">
+                    <option value="date-desc">Newest First</option>
+                    <option value="date-asc">Oldest First</option>
+                    <option value="score-desc">Highest Score</option>
+                    <option value="score-asc">Lowest Score</option>
+                    <option value="title-asc">Game (A-Z)</option>
+                </select>
+            </div>
+        </div>
+
+        {% if reviews.length > 0 %}
+        <div class="p-6">
+            <div class="space-y-6" id="reviews-list">
+                {% for review in reviews %}
+                <div class="bg-white/5 rounded-xl p-6 border border-white/5 hover:border-primary/20 transition-all group review-card"
+                    data-title="{{ review.game_name | lower }}"
+                    data-content="{{ review.content | lower }}"
+                    data-date="{{ review.created_at | toTimestamp }}"
+                    data-score="{{ review.score }}">
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <a href="/game/{{ review.igdb_id }}" class="block shrink-0 mx-auto md:mx-0">
+                            {% if review.game_cover %}
+                                <img src="{{ review.game_cover }}" alt="{{ review.game_name }}" class="w-32 h-44 object-cover rounded-lg shadow-xl group-hover:scale-105 transition-transform duration-300">
+                            {% else %}
+                                <div class="w-32 h-44 bg-white/5 rounded-lg flex items-center justify-center text-xs text-text-muted">No Cover</div>
+                            {% endif %}
+                        </a>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-4">
+                                <div>
+                                    <a href="/game/{{ review.igdb_id }}" class="font-black text-2xl text-white hover:text-primary transition-colors block mb-1">
+                                        {{ review.game_name }}
+                                    </a>
+                                    <div class="text-sm text-text-muted flex items-center gap-2 font-bold uppercase tracking-wider">
+                                        <span class="material-icons text-sm">schedule</span> {{ review.created_at | dateFormat }}
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-center md:items-end bg-black/20 p-3 rounded-xl border border-white/5 min-w-[100px]">
+                                    <span class="text-3xl font-black {% if review.score >= 7.5 %}text-green-500{% elif review.score >= 5 %}text-yellow-500{% else %}text-red-500{% endif %} leading-none">
+                                        {{ review.score }}/10
+                                    </span>
+                                    <div class="flex gap-0.5 mt-2">
+                                        {% for i in range(1, 6) %}
+                                            <span class="material-icons text-xs {% if (i * 2 - 1) <= review.score %}text-yellow-500{% else %}text-white/10{% endif %}">
+                                                {% if (i * 2) <= review.score %}star{% elif (i * 2 - 1) <= review.score %}star_half{% else %}star_outline{% endif %}
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <span class="material-icons absolute -left-2 -top-2 text-primary opacity-20 text-4xl">format_quote</span>
+                                <p class="text-slate-300 text-lg leading-relaxed italic pl-6 py-2">
+                                    {{ review.content }}
+                                </p>
+                            </div>
+                            
+                            {% if isOwnProfile %}
+                            <div class="mt-6 pt-6 border-t border-white/5 flex justify-end">
+                                <form action="/profile/review/delete/{{ review.id }}" method="POST" onsubmit="return confirm('Delete this review?');">
+                                    <button class="text-red-400 hover:text-red-300 text-xs font-bold flex items-center gap-1 uppercase tracking-wider px-4 py-2 rounded-lg hover:bg-red-500/10 transition-colors border border-red-500/20">
+                                        <span class="material-icons text-sm">delete</span> Delete Review
+                                    </button>
+                                </form>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="py-20 text-center">
+            <span class="material-icons text-6xl text-white/5 mb-4 block">rate_review</span>
+            <p class="text-white text-lg font-bold mb-2">No reviews found</p>
+            <p class="text-text-muted">
+                {{ "You haven't written any reviews yet." if isOwnProfile else "This user hasn't written any reviews yet." }}
+            </p>
+            {% if isOwnProfile %}
+            <a href="/" class="inline-block mt-6 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl font-bold transition-all">
+                Browse Games
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const searchInput = document.getElementById('review-search');
+    const sortSelect = document.getElementById('review-sort');
+    const container = document.getElementById('reviews-list');
+    const cards = Array.from(document.getElementsByClassName('review-card'));
+
+    function filterAndSort() {
+        if (!container) return;
+        
+        const query = (searchInput.value || '').toLowerCase();
+        const sortMode = sortSelect.value;
+
+        // 1. Filter
+        cards.forEach(card => {
+            const title = (card.dataset.title || '').toLowerCase();
+            const content = (card.dataset.content || '').toLowerCase();
+            const matches = title.includes(query) || content.includes(query);
+            card.style.display = matches ? '' : 'none';
+        });
+
+        // 2. Sort
+        const sortedCards = [...cards].sort((a, b) => {
+            if (sortMode === 'date-desc') return parseInt(b.dataset.date) - parseInt(a.dataset.date);
+            if (sortMode === 'date-asc') return parseInt(a.dataset.date) - parseInt(b.dataset.date);
+            
+            if (sortMode === 'score-desc') return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+            if (sortMode === 'score-asc') return parseFloat(a.dataset.score) - parseFloat(b.dataset.score);
+            
+            if (sortMode === 'title-asc') return a.dataset.title.localeCompare(b.dataset.title);
+            
+            return 0;
+        });
+
+        // 3. Re-append
+        sortedCards.forEach(card => container.appendChild(card));
+    }
+
+    if (searchInput) searchInput.addEventListener('input', filterAndSort);
+    if (sortSelect) sortSelect.addEventListener('change', filterAndSort);
+</script>
+{% endblock %}

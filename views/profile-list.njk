@@ -1,0 +1,302 @@
+{% extends "layout.njk" %}
+
+{% block mainClass %}relative{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Force dark background for select options on all platforms */
+    #game-sort {
+        background-color: rgba(255, 255, 255, 0.05); /* Matching bg-white/5 */
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1.25rem;
+        padding-right: 2.5rem;
+    }
+    #game-sort option {
+        background-color: #1a1a1a;
+        color: white;
+    }
+</style>
+
+<!-- PROFILE HERO (Shortened) -->
+<div class="relative h-[180px] w-full">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-900 to-purple-900">
+        {% if profileUser.banner_url %}
+            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ profileUser.banner_url }}')"></div>
+            <div class="absolute inset-0 bg-black/60"></div>
+        {% else %}
+            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30"></div>
+        {% endif %}
+    </div>
+    
+    <div class="absolute inset-0 flex items-end">
+        <div class="container mx-auto px-4 lg:px-10 pb-6 flex items-center gap-6">
+            <a href="/profile/{{ profileUser.id }}" class="flex-shrink-0 group">
+                <div class="w-20 h-20 rounded-full border-2 border-white/20 overflow-hidden relative">
+                    {% if profileUser.avatar_url %}
+                        <img src="{{ profileUser.avatar_url }}" alt="{{ profileUser.username }}" class="w-full h-full object-cover group-hover:opacity-80 transition-opacity">
+                    {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-xl font-bold text-white">
+                            {{ profileUser.username[0] | upper }}
+                        </div>
+                    {% endif %}
+                </div>
+            </a>
+            <div>
+                <h1 class="text-3xl font-black text-white leading-none">
+                    {{ "My" if isOwnProfile else profileUser.username + "'s" }} 
+                    {{ "Collection" if listType == 'collection' else "Wishlist" }}
+                </h1>
+                <div class="text-sm font-bold text-text-muted mt-1 uppercase tracking-wide">
+                    {{ items.length }} Items
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 lg:px-10 py-8">
+    
+    <div class="bg-card-bg rounded-xl border border-white/5 overflow-hidden">
+        
+        <!-- Toolbar -->
+        <div class="bg-white/5 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4 border-b border-white/5">
+            <div class="flex items-center gap-4 w-full md:w-auto">
+               <a href="/profile/{{ profileUser.id }}" class="text-text-muted hover:text-white transition-colors flex items-center gap-1 text-sm font-bold shrink-0">
+                    <span class="material-icons text-base">arrow_back</span> Back
+               </a>
+               <div class="h-6 w-px bg-white/10 hidden md:block"></div>
+               <div class="relative w-full md:w-64 group">
+                   <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-primary transition-colors text-lg">search</span>
+                   <input type="text" id="game-search" placeholder="Search title..." class="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-white/20">
+               </div>
+            </div>
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <span class="text-xs font-bold text-text-muted uppercase tracking-wider hidden sm:block">Sort By:</span>
+                <select id="game-sort" class="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:border-primary outline-none transition-all cursor-pointer">
+                    <option value="title-asc">Title (A-Z)</option>
+                    <option value="title-desc">Title (Z-A)</option>
+                    <option value="date-desc">Released (Newest)</option>
+                    <option value="date-asc">Released (Oldest)</option>
+                    {% if listType == 'collection' %}
+                    <option value="status">Status</option>
+                    {% endif %}
+                </select>
+            </div>
+        </div>
+
+        {% if wishlistPrivate %}
+        <div class="py-20 text-center">
+            <span class="material-icons text-6xl text-white/5 mb-4 block">lock</span>
+            <p class="text-white text-lg font-bold mb-2">Wishlist privée</p>
+            <p class="text-text-muted">Cet utilisateur a souhaité garder sa wishlist en privé.</p>
+        </div>
+        {% elif items.length > 0 %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-text-muted">
+                <thead class="bg-white/5 text-xs uppercase font-bold text-white">
+                    <tr>
+                        <th class="px-6 py-4">#</th>
+                        <th class="px-6 py-4">Image</th>
+                        <th class="px-6 py-4 w-1/3">Game Title</th>
+                        <th class="px-6 py-4">Released</th>
+                        {% if listType == 'collection' %}
+                        <th class="px-6 py-4">Status</th>
+                        {% else %}
+                        <th class="px-6 py-4">Added</th>
+                        {% endif %}
+                        {% if isOwnProfile %}
+                        <th class="px-6 py-4 text-right">Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5" id="games-tbody">
+                    {% for item in items %}
+                    <tr class="hover:bg-white/5 transition-colors group game-row" 
+                        data-title="{{ item.name | lower }}" 
+                        data-released="{{ item.first_release_date | toTimestamp }}"
+                        {% if listType == 'collection' %}data-status="{{ item.status }}"{% endif %}>
+                        <td class="px-6 py-4 font-mono text-xs opacity-50">{{ loop.index }}</td>
+                        <td class="px-6 py-4">
+                            <a href="/game/{{ item.igdb_id }}" class="block w-12 h-16 bg-gray-800 rounded overflow-hidden">
+                                {% if item.cover_url %}
+                                <img src="{{ item.cover_url }}" alt="{{ item.name }}" class="w-full h-full object-cover">
+                                {% endif %}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4">
+                            <a href="/game/{{ item.igdb_id }}" class="font-bold text-white hover:text-primary transition-colors text-base block mb-0.5">{{ item.name }}</a>
+                            <div class="text-xs truncate max-w-[200px]">{{ item.genres }}</div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ item.first_release_date | dateFormat if item.first_release_date else 'N/A' }}
+                        </td>
+                        
+                        {% if listType == 'collection' %}
+                        <td class="px-6 py-4">
+                            <span class="px-2.5 py-1 rounded text-xs font-bold uppercase
+                                {% if item.status == 'playing' %}bg-green-500/20 text-green-400
+                                {% elif item.status == 'completed' %}bg-blue-500/20 text-blue-400
+                                {% elif item.status == 'dropped' %}bg-red-500/20 text-red-400
+                                {% elif item.status == 'on_hold' %}bg-yellow-500/20 text-yellow-400
+                                {% else %}bg-gray-500/20 text-gray-400{% endif %}">
+                                {{ item.status | replace('_', ' ') }}
+                            </span>
+                        </td>
+                        {% else %}
+                        <td class="px-6 py-4">
+                            {{ item.added_at | timeAgo }}
+                        </td>
+                        {% endif %}
+
+                        {% if isOwnProfile %}
+                        <td class="px-6 py-4 text-right">
+                             {% if listType == 'collection' %}
+                                <button onclick="openCollectionModal('{{ item.game_id }}', '{{ item.status }}', '{{ item.name | escape }}')" class="p-2 hover:bg-white/10 rounded-lg text-primary transition-colors" title="Edit Status">
+                                    <span class="material-icons text-sm">edit</span>
+                                </button>
+                            {% else %}
+                                <form action="/profile/wishlist/remove/{{ item.igdb_id }}" method="POST" class="inline-block" onsubmit="return confirm('Remove from wishlist?');">
+                                    <button type="submit" class="p-2 hover:bg-white/10 rounded-lg text-red-400 transition-colors" title="Remove">
+                                        <span class="material-icons text-sm">delete</span>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="py-20 text-center">
+            <span class="material-icons text-6xl text-white/5 mb-4 block">
+                {{ 'inventory_2' if listType == 'collection' else 'bookmark_border' }}
+            </span>
+            <p class="text-white text-lg font-bold mb-2">Nothing here yet</p>
+            <p class="text-text-muted">
+                {{ "This user hasn't added any games to their collection." if listType == 'collection' else "This wishlist is empty." }}
+            </p>
+            {% if isOwnProfile %}
+            <a href="/" class="inline-block mt-6 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl font-bold transition-all">
+                Browse Games
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+
+<!-- EDIT COLLECTION MODAL -->
+<div id="collection-modal" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeCollectionModal()"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-card-bg border border-white/10 rounded-2xl shadow-2xl p-6">
+        <h3 class="text-xl font-bold text-white mb-4">Edit <span id="modal-game-name" class="text-primary"></span></h3>
+        <form id="collection-form" method="POST">
+            <input type="hidden" name="status" id="modal-status-input">
+            <div class="space-y-2">
+                <button type="button" onclick="submitCollectionStatus('playing')" class="w-full text-left px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold flex items-center gap-3 transition-colors">
+                    <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Playing
+                </button>
+                <button type="button" onclick="submitCollectionStatus('completed')" class="w-full text-left px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold flex items-center gap-3 transition-colors">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Completed
+                </button>
+                <button type="button" onclick="submitCollectionStatus('plan_to_play')" class="w-full text-left px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold flex items-center gap-3 transition-colors">
+                    <span class="w-2.5 h-2.5 rounded-full bg-gray-500"></span> Plan to Play
+                </button>
+                <button type="button" onclick="submitCollectionStatus('on_hold')" class="w-full text-left px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold flex items-center gap-3 transition-colors">
+                    <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span> On Hold
+                </button>
+                <button type="button" onclick="submitCollectionStatus('dropped')" class="w-full text-left px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold flex items-center gap-3 transition-colors">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Dropped
+                </button>
+                <div class="pt-2 border-t border-white/10 mt-2">
+                     <button type="button" onclick="submitCollectionStatus('remove')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-red-500/10 text-red-500 font-bold flex items-center gap-3 transition-colors">
+                        <span class="material-icons text-base">delete</span> Remove from Collection
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openCollectionModal(gameId, currentStatus, gameName) {
+        const modal = document.getElementById('collection-modal');
+        const form = document.getElementById('collection-form');
+        const nameSpan = document.getElementById('modal-game-name');
+        
+        // Set action URL
+        form.action = `/game/${gameId}/collection`; // This route handles status updates
+        
+        // Set game name
+        nameSpan.textContent = gameName;
+        
+        // Show modal
+        modal.classList.remove('hidden');
+    }
+
+    function closeCollectionModal() {
+        document.getElementById('collection-modal').classList.add('hidden');
+    }
+
+    function submitCollectionStatus(status) {
+        const form = document.getElementById('collection-form');
+        const input = document.getElementById('modal-status-input');
+        input.value = status;
+        form.submit();
+    }
+
+    // --- Search & Sort Logic ---
+    const searchInput = document.getElementById('game-search');
+    const sortSelect = document.getElementById('game-sort');
+    const tbody = document.getElementById('games-tbody');
+    const rows = Array.from(document.getElementsByClassName('game-row'));
+
+    function filterAndSort() {
+        const query = (searchInput.value || '').toLowerCase();
+        const sortMode = sortSelect.value;
+
+        // 1. Filter: hide/show rows
+        rows.forEach(row => {
+            const title = (row.dataset.title || '').toLowerCase();
+            const matches = title.includes(query);
+            row.style.display = matches ? '' : 'none';
+        });
+
+        // 2. Sort all rows
+        const sortedRows = [...rows].sort((a, b) => {
+            if (sortMode === 'title-asc') return a.dataset.title.localeCompare(b.dataset.title);
+            if (sortMode === 'title-desc') return b.dataset.title.localeCompare(a.dataset.title);
+            
+            if (sortMode === 'date-asc' || sortMode === 'date-desc') {
+                const timeA = parseInt(a.dataset.released) || 0;
+                const timeB = parseInt(b.dataset.released) || 0;
+                return sortMode === 'date-asc' ? timeA - timeB : timeB - timeA;
+            }
+            
+            if (sortMode === 'status') {
+                return (a.dataset.status || '').localeCompare(b.dataset.status || '');
+            }
+            return 0;
+        });
+
+        // 3. Re-append all rows in sorted order
+        sortedRows.forEach(row => tbody.appendChild(row));
+    }
+
+    searchInput.addEventListener('input', filterAndSort);
+    sortSelect.addEventListener('change', filterAndSort);
+</script>
+{% endblock %}
+

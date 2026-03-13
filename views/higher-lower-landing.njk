@@ -1,0 +1,183 @@
+{% extends "layout.njk" %}
+
+{% block head %}
+<style>
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+    }
+    .animate-float { animation: float 6s ease-in-out infinite; }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+    }
+    .glass-card:hover { border-color: rgba(13, 70, 242, 0.4); }
+
+    .glow-primary {
+        box-shadow: 0 0 30px rgba(13, 70, 242, 0.3);
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+        background: #0d46f2;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        box-shadow: 0 8px 16px rgba(13, 70, 242, 0.4);
+    }
+
+    .leaderboard-row {
+        transition: all 0.2s ease;
+    }
+    .leaderboard-row:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: scale(1.02);
+    }
+    
+    .rank-badge {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 800;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-12">
+    <!-- Hero Section -->
+    <div class="flex flex-col lg:flex-row items-center gap-16 mb-24">
+        <div class="flex-1 text-center lg:text-left">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-widest mb-6 animate-pulse">
+                <span class="material-icons text-sm">auto_awesome</span> New Mini-Game
+            </div>
+            <h1 class="text-7xl lg:text-8xl font-black mb-6 leading-none italic uppercase">
+                Higher or <span class="text-primary">Lower ?</span>
+            </h1>
+            <p class="text-xl text-text-muted mb-10 max-w-xl leading-relaxed">
+                Test your knowledge of the video game industry. Can you guess which titles dominate the Steam charts in real time?
+            </p>
+            
+            <div class="flex flex-wrap items-center gap-6 justify-center lg:justify-start">
+                <a href="/higher-lower/play" class="bg-primary hover:bg-primary/80 text-white px-10 py-5 rounded-2xl font-black text-xl transition-all transform hover:scale-105 glow-primary flex items-center gap-3">
+                    Start a Game <span class="material-icons">play_arrow</span>
+                </a>
+                
+                {% if user %}
+                <div class="text-left">
+                    <p class="text-xs font-bold text-text-muted uppercase tracking-widest">Votre Record</p>
+                    <p class="text-3xl font-black">{{ personalBest }} <span class="text-sm font-normal text-text-muted">points</span></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="flex-1 relative hidden lg:block">
+            <div class="relative z-10 animate-float">
+                <div class="glass-card p-4 rounded-[2rem] w-[400px] h-[500px] flex flex-col items-center justify-center text-center">
+                    <div class="w-full h-48 rounded-xl bg-cover bg-center mb-6" style="background-image: url('https://cdn.akamai.steamstatic.com/steam/apps/570/header.jpg')"></div>
+                    <h3 class="text-2xl font-bold mb-2">Dota 2</h3>
+                    <div class="text-5xl font-black text-primary mb-4">642,109</div>
+                    <p class="text-sm font-bold opacity-30 uppercase tracking-[0.2em]">Concurrent Players</p>
+                </div>
+            </div>
+            <!-- Decorative elements -->
+            <div class="absolute -top-10 -right-10 w-64 h-64 bg-primary/10 rounded-full blur-[100px]"></div>
+            <div class="absolute -bottom-10 -left-10 w-64 h-64 bg-violet-600/10 rounded-full blur-[100px]"></div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <!-- How it works -->
+        <div class="lg:col-span-2 space-y-8">
+            <h2 class="text-4xl font-black italic uppercase">How <span class="text-primary text-stroke">it works ?</span></h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card p-8 rounded-3xl">
+                    <div class="step-number">01</div>
+                    <h3 class="text-xl font-bold mb-3">The Duel</h3>
+                    <p class="text-text-muted text-sm leading-relaxed">
+                        We present two popular games. The first one shows its live player count.
+                    </p>
+                </div>
+                
+                <div class="glass-card p-8 rounded-3xl">
+                    <div class="step-number">02</div>
+                    <h3 class="text-xl font-bold mb-3">The Bet</h3>
+                    <p class="text-text-muted text-sm leading-relaxed">
+                        Guess if the second game has <strong>more</strong> or <strong>fewer</strong> concurrent players than the first.
+                    </p>
+                </div>
+                
+                <div class="glass-card p-8 rounded-3xl">
+                    <div class="step-number">03</div>
+                    <h3 class="text-xl font-bold mb-3">The Streak</h3>
+                    <p class="text-text-muted text-sm leading-relaxed">
+                        As long as you're right, the streak continues and your score climbs. One mistake and it's over!
+                    </p>
+                </div>
+                
+                <div class="glass-card p-8 rounded-3xl">
+                    <div class="step-number">04</div>
+                    <h3 class="text-xl font-bold mb-3">The Summit</h3>
+                    <p class="text-text-muted text-sm leading-relaxed">
+                        Get your name to the top of the global leaderboard and prove you know the market.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard -->
+        <div>
+            <div class="glass-card p-8 rounded-[2rem] border-primary/20 bg-primary/5">
+                <h2 class="text-2xl font-black mb-8 flex items-center gap-3 italic uppercase">
+                    <span class="material-icons text-primary">emoji_events</span> Hall of Fame
+                </h2>
+                
+                <div class="space-y-4">
+                    {% for entry in leaderboard %}
+                    <div class="leaderboard-row flex items-center gap-4 p-3 rounded-2xl bg-white/5">
+                        <div class="rank-badge {% if loop.index == 1 %}bg-yellow-500 text-black{% elif loop.index == 2 %}bg-slate-300 text-black{% elif loop.index == 3 %}bg-amber-600 text-white{% else %}bg-white/10 text-text-muted{% endif %}">
+                            {{ loop.index }}
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center overflow-hidden">
+                            {% if entry.avatar_url %}
+                                <img src="{{ entry.avatar_url }}" alt="" class="w-full h-full object-cover">
+                            {% else %}
+                                <span class="text-xs font-bold">{{ entry.username[0] | upper }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-sm truncate">{{ entry.username }}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-primary font-black text-lg">{{ entry.score }}</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-text-muted py-10 italic">No scores yet...</p>
+                    {% endfor %}
+                </div>
+                
+                {% if not user %}
+                <div class="mt-8 p-4 rounded-xl bg-primary/10 border border-primary/20 text-center">
+                    <p class="text-xs font-bold text-primary mb-2 uppercase tracking-tight">Login to be ranked!</p>
+                    <a href="/login" class="text-xs underline hover:text-white transition-colors">Sign in</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+/* ── Routes Accueil ─────────────────────────────────────────── */
+const router = require("express").Router();
+const home = require("../controllers/home.controller");
+
+const game = require("../controllers/game.controller");
+
+router.get("/", home.index);
+router.get("/search", home.search);
+router.get("/calendar", game.calendar); // Moved to root level
+router.get("/genre/:id", home.genre);
+router.get("/platform/:id", home.platform);
+
+module.exports = router;

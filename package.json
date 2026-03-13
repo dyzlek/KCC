@@ -1,0 +1,25 @@
+{
+  "name": "kc-catalogue",
+  "version": "1.0.0",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "multer": "^2.0.2",
+    "mysql2": "^3.16.3",
+    "node-fetch": "^2.7.0",
+    "nunjucks": "^3.2.4",
+    "passport": "^0.7.0",
+    "passport-steam": "^1.0.18"
+  }
+}

@@ -1,0 +1,629 @@
+{% extends "layout.njk" %}
+
+{% block content %}
+
+<h1 class="text-4xl font-black text-white mb-8">Settings</h1>
+
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+
+    <!-- Settings Sidebar -->
+    <div class="lg:col-span-3">
+        <div class="space-y-1 sticky top-24">
+            <button onclick="scrollToSection('profile')"
+                class="w-full text-left px-4 py-2 bg-white/10 text-white font-bold rounded-lg mb-1 text-sm">Profile</button>
+            <button onclick="scrollToSection('security')"
+                class="w-full text-left px-4 py-2 text-text-muted hover:bg-white/5 hover:text-white rounded-lg transition-colors text-sm">Security</button>
+
+            <button onclick="scrollToSection('privacy')"
+                class="w-full text-left px-4 py-2 text-text-muted hover:bg-white/5 hover:text-white rounded-lg transition-colors text-sm">Privacy</button>
+            <button onclick="scrollToSection('collection')"
+                class="w-full text-left px-4 py-2 text-text-muted hover:bg-white/5 hover:text-white rounded-lg transition-colors text-sm">Collection</button>
+            <button onclick="scrollToSection('wishlist')"
+                class="w-full text-left px-4 py-2 text-text-muted hover:bg-white/5 hover:text-white rounded-lg transition-colors text-sm">Wishlist</button>
+            <button onclick="scrollToSection('reviews')"
+                class="w-full text-left px-4 py-2 text-text-muted hover:bg-white/5 hover:text-white rounded-lg transition-colors text-sm">My Reviews</button>
+            <div class="border-t border-white/5 my-2"></div>
+            <a href="/profile/{{ user.id }}/following"
+                class="w-full text-left px-4 py-2 text-text-muted hover:bg-white/5 hover:text-white rounded-lg transition-colors text-sm flex items-center gap-2">
+                <span class="material-icons text-sm">group</span> Following
+                <span class="ml-auto text-xs text-primary font-bold">{{ followCounts.following }}</span>
+            </a>
+
+            <!-- Badges sidebar display -->
+            {% if badges and badges.length > 0 %}
+            <div class="pt-6 px-4">
+                <h3 class="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-4">Achievements</h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for badge in badges %}
+                    <div class="group relative" title="{{ badge.name }}: {{ badge.description }}">
+                        <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 hover:border-primary/30 transition-all cursor-help">
+                            <span class="material-icons {{ badge.color }} text-lg">{{ badge.icon }}</span>
+                        </div>
+                        <!-- Tooltip -->
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-black text-[10px] text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-white/10 text-center shadow-2xl">
+                            <div class="font-bold mb-0.5 {{ badge.color }}">{{ badge.name }}</div>
+                            {{ badge.description }}
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-black"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Settings Content -->
+    <div class="lg:col-span-9 space-y-10">
+
+        <!-- Stats Section Redesign -->
+        <section id="stats" class="scroll-mt-24">
+            <div class="flex items-center justify-between mb-8 pb-3 border-b border-white/10 uppercase tracking-widest text-[10px] font-black text-white/40">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-sm">analytics</span> Statistics Hub
+                </div>
+                <span>Overview</span>
+            </div>
+            
+            <div class="space-y-10">
+                <!-- Top Metrics Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-card-bg p-8 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-primary/30 transition-all shadow-xl">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-all"></div>
+                        <div class="relative">
+                            <div class="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-4">Total Entries</div>
+                            <div class="text-5xl font-black text-white leading-none tracking-tighter">{{ stats.total_games }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-card-bg p-8 rounded-3xl border border-white/5 relative overflow-hidden group hover:border-primary/30 transition-all shadow-xl">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-all"></div>
+                        <div class="relative">
+                            <div class="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-4">Mean Score</div>
+                            <div class="text-5xl font-black text-primary leading-none tracking-tighter">{{ stats.mean_score }}</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-card-bg p-8 rounded-3xl border border-indigo-500/10 relative overflow-hidden group hover:border-indigo-500/30 transition-all shadow-xl">
+                        <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-all"></div>
+                        <div class="relative">
+                            <div class="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-4">Higher Lower Best</div>
+                            <div class="flex items-end gap-2">
+                                <div class="text-5xl font-black text-indigo-400 leading-none tracking-tighter">#{{ stats.higher_lower_best }}</div>
+                                <span class="material-icons text-indigo-400/40 pb-1">trending_up</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 bg-[#111] p-10 rounded-[2.5rem] border border-white/5 shadow-2xl relative overflow-hidden">
+                    <div class="absolute right-0 bottom-0 opacity-[0.01] pointer-events-none">
+                        <span class="material-icons text-[20rem] translate-y-20 translate-x-20">bar_chart</span>
+                    </div>
+
+                    <!-- Distribution Bars -->
+                    <div class="lg:col-span-8 space-y-8 relative">
+                        <h3 class="text-xs font-black text-white/60 uppercase tracking-[0.3em] mb-4">Status Distribution</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                            <!-- Playing -->
+                            <div class="group">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-[11px] font-black text-green-400 uppercase tracking-widest">Playing</span>
+                                    <span class="text-xs font-black text-white">{{ stats.status_counts.playing }}</span>
+                                </div>
+                                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="h-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]" style="width: {{ (stats.status_counts.playing / stats.total_games * 100) if stats.total_games > 0 else 0 }}%"></div>
+                                </div>
+                            </div>
+                            <!-- Completed -->
+                            <div class="group">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-[11px] font-black text-blue-400 uppercase tracking-widest">Completed</span>
+                                    <span class="text-xs font-black text-white">{{ stats.status_counts.completed }}</span>
+                                </div>
+                                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]" style="width: {{ (stats.status_counts.completed / stats.total_games * 100) if stats.total_games > 0 else 0 }}%"></div>
+                                </div>
+                            </div>
+                            <!-- Plan to Play -->
+                            <div class="group">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Planning</span>
+                                    <span class="text-xs font-black text-white">{{ stats.status_counts.plan_to_play }}</span>
+                                </div>
+                                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gray-500" style="width: {{ (stats.status_counts.plan_to_play / stats.total_games * 100) if stats.total_games > 0 else 0 }}%"></div>
+                                </div>
+                            </div>
+                            <!-- On Hold -->
+                            <div class="group">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-[11px] font-black text-yellow-400 uppercase tracking-widest">On Hold</span>
+                                    <span class="text-xs font-black text-white">{{ stats.status_counts.on_hold }}</span>
+                                </div>
+                                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="h-full bg-yellow-500" style="width: {{ (stats.status_counts.on_hold / stats.total_games * 100) if stats.total_games > 0 else 0 }}%"></div>
+                                </div>
+                            </div>
+                             <!-- Dropped -->
+                            <div class="group">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-[11px] font-black text-red-400 uppercase tracking-widest">Dropped</span>
+                                    <span class="text-xs font-black text-white">{{ stats.status_counts.dropped }}</span>
+                                </div>
+                                <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="h-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.3)]" style="width: {{ (stats.status_counts.dropped / stats.total_games * 100) if stats.total_games > 0 else 0 }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Side Visual -->
+                    <div class="lg:col-span-4 flex items-center justify-center lg:border-l border-white/5 lg:pl-10">
+                         <div class="text-center group relative">
+                            <div class="absolute -inset-8 bg-primary/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div class="relative inline-flex items-center justify-center w-36 h-36 rounded-full bg-gradient-to-br from-primary/10 to-purple-600/5 border border-white/10 shadow-inner">
+                                 <div class="absolute inset-2 border border-white/[0.03] rounded-full animate-[spin_20s_linear_infinite]"></div>
+                                 <div class="flex flex-col items-center">
+                                     <div class="text-3xl font-black text-white leading-none tracking-tighter">{{ stats.total_games }}</div>
+                                     <div class="text-[8px] font-black text-primary uppercase tracking-[0.2em] mt-2">Total Games</div>
+                                 </div>
+                            </div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Steam Stats (Private Overview) -->
+            {% if steamStats %}
+            <div class="mt-6 pt-6 border-t border-white/5">
+                <div class="flex items-center gap-3 text-[#66c0f4] mb-4">
+                    <img src="https://community.akamai.steamstatic.com/public/shared/images/header/logo_steam.svg?t=962016" alt="Steam" class="h-4 opacity-80">
+                    <h3 class="text-sm font-bold uppercase tracking-wider">Steam Activity</h3>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-black/20 p-4 rounded-xl border border-white/5 flex items-center justify-between">
+                        <div>
+                            <div class="text-[10px] text-text-muted uppercase font-bold mb-1">Total Playtime</div>
+                            <div class="text-xl font-black text-white">{{ steamStats.total }} hours</div>
+                        </div>
+                        <span class="material-icons text-white/10 text-3xl">history</span>
+                    </div>
+                    <div class="bg-black/20 p-4 rounded-xl border border-white/5 flex items-center justify-between">
+                        <div>
+                            <div class="text-[10px] text-text-muted uppercase font-bold mb-1">Recent (2 weeks)</div>
+                            <div class="text-xl font-black text-[#66c0f4]">{{ steamStats.recent }} hours</div>
+                        </div>
+                        <span class="material-icons text-[#66c0f4]/20 text-3xl">update</span>
+                    </div>
+                </div>
+                {% if user.steam_id %}
+                <div class="mt-4 flex justify-end">
+                    <a href="https://steamcommunity.com/profiles/{{ user.steam_id }}" target="_blank" class="text-xs font-bold text-[#66c0f4] hover:text-white transition-colors flex items-center gap-1">
+                        VIEW PUBLIC STEAM PROFILE <span class="material-icons text-sm">open_in_new</span>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile" class="scroll-mt-24">
+            <h2 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-3">Profile Information</h2>
+
+            <div class="flex items-center gap-6 mb-8">
+                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-3xl font-bold text-white overflow-hidden border-2 border-white/10">
+                    {% if user.avatar_url %}
+                        <img src="{{ user.avatar_url }}" alt="Avatar" class="w-full h-full object-cover">
+                    {% else %}
+                        {{ user.username[0] | upper }}
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 class="font-bold text-white">{{ user.username }}</h3>
+                    <p class="text-sm text-text-muted">{{ user.email }}</p>
+                </div>
+            </div>
+
+            <form action="/profile/update" method="POST" enctype="multipart/form-data" class="space-y-5 max-w-xl">
+                <!-- Avatar Upload -->
+                <div>
+                    <label class="block text-sm font-bold text-text-muted mb-2">Profile Picture</label>
+                    <input type="file" name="avatar" accept="image/*"
+                        class="w-full text-sm text-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 cursor-pointer">
+                </div>
+
+                <!-- Banner Upload -->
+                <div>
+                    <label class="block text-sm font-bold text-text-muted mb-2">Banner Image</label>
+                    {% if user.banner_url %}
+                        <div class="h-24 w-full rounded-lg bg-cover bg-center mb-3 border border-white/10" style="background-image: url('{{ user.banner_url }}')"></div>
+                    {% endif %}
+                    <input type="file" name="banner" accept="image/*"
+                        class="w-full text-sm text-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 cursor-pointer">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-text-muted mb-2">Username</label>
+                    <input type="text" name="username" value="{{ user.username }}"
+                        class="w-full bg-card-bg border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-text-muted mb-2">Bio</label>
+                    <textarea name="bio" rows="3"
+                        class="w-full bg-card-bg border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm">{{ user.bio or '' }}</textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-sm font-bold text-text-muted mb-2">Location</label>
+                        <input type="text" name="location" value="{{ user.location }}" placeholder="City, Country"
+                            class="w-full bg-card-bg border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-text-muted mb-2">Birthday</label>
+                        <input type="date" name="birthday" value="{{ user.birthday | isoDate if user.birthday else '' }}"
+                            class="w-full bg-card-bg border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-text-muted mb-2">Gender</label>
+                    <select name="gender" class="w-full bg-card-bg border border-white/10 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm">
+                        <option value="" {{ 'selected' if not user.gender }}>Prefer not to say</option>
+                        <option value="male" {{ 'selected' if user.gender == 'male' }}>Male</option>
+                        <option value="female" {{ 'selected' if user.gender == 'female' }}>Female</option>
+                        <option value="other" {{ 'selected' if user.gender == 'other' }}>Other</option>
+                    </select>
+                </div>
+
+                <div class="pt-4 flex items-center gap-4">
+                    <button type="submit"
+                        class="bg-white text-black hover:bg-primary hover:text-white px-6 py-2.5 rounded-lg font-bold transition-colors text-sm">
+                        Save Changes</button>
+                    
+                    {% if not user.steam_id %}
+                        <a href="/auth/steam" class="flex items-center gap-2 bg-[#171a21] hover:bg-[#2a475e] text-white px-4 py-2.5 rounded-lg font-bold transition-colors text-sm">
+                            <img src="https://community.akamai.steamstatic.com/public/shared/images/header/logo_steam.svg?t=962016" alt="Steam" class="h-4">
+                            Connect Steam
+                        </a>
+                    {% else %}
+                        <div class="flex items-center gap-2 bg-[#171a21]/50 text-text-muted px-4 py-2.5 rounded-lg font-bold text-sm border border-white/5">
+                            <span class="material-icons text-sm text-green-500">link</span>
+                            Steam Connected
+                        </div>
+                    {% endif %}
+                </div>
+            </form>
+
+            {% if success %}
+            <div class="mt-4 bg-green-500/10 border border-green-500/30 text-green-500 px-4 py-3 rounded-lg flex items-center gap-2 text-sm max-w-xl">
+                <span class="material-icons text-sm">check_circle</span> {{ success }}
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Security Section -->
+        <section id="security" class="scroll-mt-24">
+            <h2 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-3">Security</h2>
+            
+            {% if error %}
+            <div class="mb-6 bg-red-500/10 border border-red-500/30 text-red-500 px-4 py-3 rounded-lg flex items-center gap-2 text-sm max-w-xl">
+                <span class="material-icons text-sm">error</span> {{ error }}
+            </div>
+            {% endif %}
+
+            {% if success %}
+            <div class="mb-6 bg-green-500/10 border border-green-500/30 text-green-500 px-4 py-3 rounded-lg flex items-center gap-2 text-sm max-w-xl">
+                <span class="material-icons text-sm">check_circle</span> {{ success }}
+            </div>
+            {% endif %}
+
+            <div class="bg-card-bg p-6 rounded-xl border border-white/5 space-y-8 max-w-xl">
+                
+                <!-- Change Password -->
+                <div>
+                    <h3 class="font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="material-icons text-primary">lock</span> Change Password
+                    </h3>
+                    <form action="/profile/security/password" method="POST" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-text-muted mb-1.5 uppercase tracking-wide">Current Password</label>
+                            <input type="password" name="current_password" required
+                                class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-text-muted mb-1.5 uppercase tracking-wide">New Password</label>
+                                <input type="password" name="new_password" required
+                                    class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-text-muted mb-1.5 uppercase tracking-wide">Confirm</label>
+                                <input type="password" name="confirm_password" required
+                                    class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm">
+                            </div>
+                        </div>
+                        <button type="submit" class="bg-white/10 hover:bg-white/20 text-white px-5 py-2 rounded-lg font-bold text-sm transition-colors">
+                            Update Password
+                        </button>
+                    </form>
+                </div>
+
+                <div class="h-px bg-white/10 w-full"></div>
+
+                <!-- Delete Account -->
+                <div>
+                    <h3 class="font-bold text-red-500 mb-2 flex items-center gap-2">
+                        <span class="material-icons">warning</span> Danger Zone
+                    </h3>
+                    <p class="text-xs text-text-muted mb-4">
+                        Once you delete your account, there is no going back. All your data (reviews, collections, wishlists) will be permanently removed.
+                    </p>
+                    <form action="/profile/security/delete" method="POST" onsubmit="return confirm('Are you strictly sure you want to delete your account? This action cannot be undone.');">
+                        <button type="submit" class="bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/30 px-5 py-2 rounded-lg font-bold text-sm transition-colors">
+                            Delete Account
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Privacy Section -->
+        <section id="privacy" class="scroll-mt-24">
+            <h2 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-3">Privacy</h2>
+            <div class="bg-card-bg p-5 rounded-xl space-y-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-white text-sm">Public Wishlist</h3>
+                        <p class="text-xs text-text-muted">Allow everyone to see your wishlist.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="wishlist-privacy-toggle" {{ 'checked' if user.wishlist_public }} class="sr-only peer" onchange="toggleWishlistPrivacy()">
+                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-white text-sm">Public Following</h3>
+                        <p class="text-xs text-text-muted">Allow everyone to see who you follow.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="follows-privacy-toggle" {{ 'checked' if user.follows_public }} class="sr-only peer" onchange="toggleFollowsPrivacy()">
+                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-white text-sm">Public Info</h3>
+                        <p class="text-xs text-text-muted">Show age, gender, and location on your public profile.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="info-privacy-toggle" {{ 'checked' if user.info_public }} class="sr-only peer" onchange="toggleInfoPrivacy()">
+                        <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Collection Section -->
+        <section id="collection" class="scroll-mt-24">
+            <h2 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-3">
+                My Collection
+                {% if collection %}<span class="text-sm text-text-muted font-normal ml-2">({{ stats.total_games }})</span>{% endif %}
+                <a href="/profile/{{ user.id }}/collection" class="float-right text-xs font-bold text-primary hover:text-white transition-colors mt-1.5 uppercase tracking-wider">View Full List</a>
+            </h2>
+
+            {% if collection and collection.length > 0 %}
+                <!-- Status Tabs -->
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button class="px-4 py-2 rounded-lg bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20">All</button>
+                    <button class="px-4 py-2 rounded-lg bg-card-bg hover:bg-white/5 text-text-muted hover:text-white text-sm font-bold transition-colors">Playing</button>
+                    <button class="px-4 py-2 rounded-lg bg-card-bg hover:bg-white/5 text-text-muted hover:text-white text-sm font-bold transition-colors">Completed</button>
+                    <button class="px-4 py-2 rounded-lg bg-card-bg hover:bg-white/5 text-text-muted hover:text-white text-sm font-bold transition-colors">Plan to Play</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for item in collection %}
+                    <div class="bg-card-bg rounded-xl overflow-hidden border border-white/5 group hover:border-primary/50 transition-colors relative">
+                        <a href="/game/{{ item.igdb_id }}" class="flex h-24">
+                            <div class="w-16 h-full bg-gray-800 flex-shrink-0">
+                                <img src="{{ item.game_cover }}" alt="{{ item.game_name }}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="p-3 flex-1 flex flex-col justify-between min-w-0">
+                                <h3 class="font-bold text-white text-sm truncate group-hover:text-primary transition-colors">{{ item.game_name }}</h3>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded
+                                        {% if item.status == 'playing' %}bg-green-500/20 text-green-400
+                                        {% elif item.status == 'completed' %}bg-blue-500/20 text-blue-400
+                                        {% elif item.status == 'dropped' %}bg-red-500/20 text-red-400
+                                        {% elif item.status == 'on_hold' %}bg-yellow-500/20 text-yellow-400
+                                        {% else %}bg-gray-500/20 text-gray-400{% endif %}">
+                                        {{ item.status | replace('_', ' ') }}
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                        <!-- Edit status trigger (could be a modal in future) -->
+                        <div class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <a href="/game/{{ item.igdb_id }}" class="p-1.5 bg-black/60 rounded-lg text-white hover:bg-primary transition-colors" title="Edit Status">
+                                <span class="material-icons text-xs">edit</span>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                 <div class="py-8 text-center">
+                    <span class="material-icons text-3xl text-white/20 mb-2 block">library_books</span>
+                    <p class="text-text-muted text-sm">Your collection is empty.</p>
+                    <a href="/" class="text-primary text-sm font-bold hover:underline mt-2 inline-block">Start adding games</a>
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- Wishlist Section -->
+        <section id="wishlist" class="scroll-mt-24">
+            <h2 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-3">
+                My Wishlist
+                {% if wishlist %}<span class="text-sm text-text-muted font-normal ml-2">({{ wishlist.length }} recent)</span>{% endif %}
+                <a href="/profile/{{ user.id }}/wishlist" class="float-right text-xs font-bold text-primary hover:text-white transition-colors mt-1.5 uppercase tracking-wider">View Full List</a>
+            </h2>
+
+            {% if wishlist and wishlist.length > 0 %}
+                <div class="space-y-3">
+                    {% for item in wishlist %}
+                    <div class="flex items-center gap-4 bg-card-bg p-4 rounded-xl group hover:bg-white/5 transition-colors">
+                        <a href="/game/{{ item.igdb_id }}" class="w-16 h-12 bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
+                            {% if item.game_cover %}
+                                <img src="{{ item.game_cover }}" alt="{{ item.game_name }}" class="w-full h-full object-cover">
+                            {% else %}
+                                <div class="w-full h-full bg-gradient-to-br from-purple-900 to-indigo-900"></div>
+                            {% endif %}
+                        </a>
+                        <div class="flex-1 min-w-0">
+                            <a href="/game/{{ item.igdb_id }}" class="font-bold text-white text-sm hover:text-primary transition-colors">{{ item.game_name }}</a>
+                            <div class="text-xs text-text-muted">Added {{ item.added_at | timeAgo }}</div>
+                        </div>
+                        <form action="/profile/wishlist/remove/{{ item.igdb_id }}" method="POST">
+                            <button class="p-2 text-text-muted hover:text-red-500 transition-colors" title="Remove">
+                                <span class="material-icons text-lg">close</span>
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="py-8 text-center">
+                    <span class="material-icons text-3xl text-white/20 mb-2 block">star_border</span>
+                    <p class="text-text-muted text-sm">No items in your wishlist yet.</p>
+                    <a href="/" class="text-primary text-sm font-bold hover:underline mt-2 inline-block">Browse games</a>
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- Reviews Section -->
+        <section id="reviews" class="scroll-mt-24">
+            <h2 class="text-xl font-bold text-white mb-6 border-b border-white/10 pb-3">
+                My Reviews
+                {% if reviews %}<span class="text-sm text-text-muted font-normal ml-2">({{ reviews.length }} recent)</span>{% endif %}
+                <a href="/profile/{{ user.id }}/reviews" class="float-right text-xs font-bold text-primary hover:text-white transition-colors mt-1.5 uppercase tracking-wider">View Full List</a>
+            </h2>
+
+            {% if reviews and reviews.length > 0 %}
+                <div class="space-y-4">
+                    {% for review in reviews %}
+                    <div class="bg-card-bg rounded-xl p-5 border border-white/5 hover:border-primary/20 transition-all group">
+                        <div class="flex gap-4">
+                            <a href="/game/{{ review.igdb_id }}" class="block shrink-0">
+                                {% if review.game_cover %}
+                                    <img src="{{ review.game_cover }}" alt="{{ review.game_name }}" class="w-20 h-28 object-cover rounded-lg shadow-lg group-hover:scale-105 transition-transform">
+                                {% else %}
+                                    <div class="w-20 h-28 bg-white/5 rounded-lg flex items-center justify-center text-xs text-text-muted">No Cover</div>
+                                {% endif %}
+                            </a>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start mb-2">
+                                    <a href="/game/{{ review.igdb_id }}" class="font-bold text-lg text-white hover:text-primary transition-colors truncate pr-4">
+                                        {{ review.game_name }}
+                                    </a>
+                                    <div class="flex flex-col items-end">
+                                        <span class="text-2xl font-black {% if review.score >= 7.5 %}text-green-500{% elif review.score >= 5 %}text-yellow-500{% else %}text-red-500{% endif %} leading-none">
+                                            {{ review.score }}/10
+                                        </span>
+                                        <div class="flex gap-0.5 mt-1">
+                                            {% for i in range(1, 6) %}
+                                                <span class="material-icons text-[10px] {% if (i * 2 - 1) <= review.score %}text-yellow-500{% else %}text-[#333]{% endif %}">
+                                                    {% if (i * 2) <= review.score %}star{% elif (i * 2 - 1) <= review.score %}star_half{% else %}star_outline{% endif %}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-slate-300 text-sm leading-relaxed line-clamp-2 md:line-clamp-3 mb-3">
+                                    "{{ review.content }}"
+                                </p>
+                                <div class="flex items-center justify-between">
+                                    <div class="text-xs text-text-muted flex items-center gap-2">
+                                        <span class="material-icons text-sm">schedule</span> {{ review.created_at | timeAgo }}
+                                    </div>
+                                    <form action="/profile/review/delete/{{ review.id }}" method="POST" onsubmit="return confirm('Delete this review?');">
+                                        <button class="text-red-400 hover:text-red-300 text-xs font-bold flex items-center gap-1 uppercase tracking-wider px-2 py-1 rounded hover:bg-red-500/10 transition-colors">
+                                            <span class="material-icons text-sm">delete</span> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="py-8 text-center">
+                    <span class="material-icons text-3xl text-white/20 mb-2 block">rate_review</span>
+                    <p class="text-text-muted text-sm">No reviews yet.</p>
+                    <a href="/" class="text-primary text-sm font-bold hover:underline mt-2 inline-block">Browse games to review</a>
+                </div>
+            {% endif %}
+        </section>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function scrollToSection(id) {
+        document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function toggleWishlistPrivacy() {
+        try {
+            const res = await fetch('/profile/privacy/wishlist-toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            const data = await res.json();
+            if (!data.success) {
+                // Revert toggle on error
+                const toggle = document.getElementById('wishlist-privacy-toggle');
+                toggle.checked = !toggle.checked;
+            }
+        } catch (err) {
+            console.error('Error toggling wishlist privacy:', err);
+            const toggle = document.getElementById('wishlist-privacy-toggle');
+            toggle.checked = !toggle.checked;
+        }
+    }
+
+    async function toggleFollowsPrivacy() {
+        try {
+            const res = await fetch('/profile/privacy/follows-toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            const data = await res.json();
+            if (!data.success) {
+                const toggle = document.getElementById('follows-privacy-toggle');
+                toggle.checked = !toggle.checked;
+            }
+        } catch (err) {
+            console.error('Error toggling follows privacy:', err);
+            const toggle = document.getElementById('follows-privacy-toggle');
+            toggle.checked = !toggle.checked;
+        }
+    }
+
+    async function toggleInfoPrivacy() {
+        try {
+            const res = await fetch('/profile/privacy/info-toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+            const data = await res.json();
+            if (!data.success) {
+                const toggle = document.getElementById('info-privacy-toggle');
+                toggle.checked = !toggle.checked;
+            }
+        } catch (err) {
+            console.error('Error toggling info privacy:', err);
+            const toggle = document.getElementById('info-privacy-toggle');
+            toggle.checked = !toggle.checked;
+        }
+    }
+</script>
+{% endblock %}

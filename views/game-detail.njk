@@ -1,0 +1,761 @@
+{% extends "layout.njk" %}
+
+{% block mainClass %}relative{% endblock %}
+
+{% block content %}
+
+{% if not game %}
+<div class="py-20 text-center px-4">
+<span class="material-icons text-6xl text-white/20 mb-4 block">error</span>
+<h3 class="text-2xl font-bold text-white mb-2">Game not found</h3>
+<p class="text-text-muted mb-6">This game doesn't exist in the IGDB database.</p>
+<a href="/" class="bg-white text-black hover:bg-primary hover:text-white px-6 py-3 rounded-lg font-bold transition-all inline-flex items-center gap-2">
+<span class="material-icons">arrow_back</span> Back to catalogue
+</a>
+</div>
+{% else %}
+
+<!-- HERO SECTION -->
+<div class="relative h-[450px] w-full">
+<div class="absolute inset-0 bg-gray-800">
+{% if game.screenshots and game.screenshots.length > 0 %}
+<img src="{{ game.screenshots[0].urlHD }}" alt="{{ game.name }}" class="absolute inset-0 w-full h-full object-cover opacity-40">
+{% elif game.coverUrlHD %}
+<img src="{{ game.coverUrlHD }}" alt="{{ game.name }}" class="absolute inset-0 w-full h-full object-cover opacity-40">
+{% endif %}
+</div>
+<div class="absolute inset-0 hero-gradient"></div>
+
+<div class="absolute inset-0 flex flex-col justify-end px-4 lg:px-10 py-10">
+<div class="w-full">
+<!-- Breadcrumbs -->
+<div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-muted mb-4">
+<span class="text-white">{{ game.name }}</span>
+</div>
+
+{% if game.releaseDateFormatted %}
+<div class="flex items-center gap-2 mb-3 text-text-muted text-sm font-medium">
+<span class="material-icons text-base">calendar_today</span>
+<span>Released: <span class="text-white">{{ game.releaseDateFormatted }}</span></span>
+</div>
+{% endif %}
+
+<h1 class="text-4xl md:text-6xl lg:text-7xl font-black leading-none mb-6 uppercase" style="background: linear-gradient(135deg, #ffffff 0%, #a8c0ff 50%, #0d46f2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+{{ game.name }}
+</h1>
+
+<!-- Actions -->
+<div class="flex flex-wrap items-center gap-3">
+{% if user %}
+<div class="relative inline-block">
+<button onclick="toggleCollectionDropdown(event)"
+class="px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg
+{% if collectionStatus == 'playing' %}bg-green-600 text-white shadow-green-500/25 hover:bg-green-700
+{% elif collectionStatus == 'completed' %}bg-blue-600 text-white shadow-blue-500/25 hover:bg-blue-700
+{% elif collectionStatus == 'plan_to_play' %}bg-gray-600 text-white shadow-gray-500/25 hover:bg-gray-700
+{% elif collectionStatus == 'dropped' %}bg-red-600 text-white shadow-red-500/25 hover:bg-red-700
+{% elif collectionStatus == 'on_hold' %}bg-yellow-600 text-white shadow-yellow-500/25 hover:bg-yellow-700
+{% else %}bg-primary text-white hover:bg-primary/90 shadow-primary/25{% endif %}">
+<span class="material-icons">
+{% if collectionStatus == 'playing' %}sports_esports
+{% elif collectionStatus == 'completed' %}emoji_events
+{% elif collectionStatus == 'plan_to_play' %}playlist_add_check
+{% elif collectionStatus == 'dropped' %}block
+{% elif collectionStatus == 'on_hold' %}pause_circle
+{% else %}library_add{% endif %}
+</span>
+<span>
+{% if collectionStatus == 'playing' %}Playing
+{% elif collectionStatus == 'completed' %}Completed
+{% elif collectionStatus == 'plan_to_play' %}Plan to Play
+{% elif collectionStatus == 'dropped' %}Dropped
+{% elif collectionStatus == 'on_hold' %}On Hold
+{% else %}Add to Collection{% endif %}
+</span>
+<span class="material-icons text-sm ml-1">expand_more</span>
+</button>
+
+<!-- Dropdown Menu -->
+<div id="collection-dropdown" class="absolute top-full left-0 mt-2 w-48 bg-card-bg border border-white/10 rounded-xl shadow-xl overflow-hidden hidden z-50">
+<form action="/game/{{ game.id }}/collection" method="POST">
+<input type="hidden" name="status" value="playing">
+<button type="submit" class="w-full text-left px-4 py-3 hover:bg-white/5 text-sm font-bold text-white flex items-center gap-2 transition-colors">
+<span class="w-2 h-2 rounded-full bg-green-500"></span> Playing
+</button>
+</form>
+<form action="/game/{{ game.id }}/collection" method="POST">
+<input type="hidden" name="status" value="completed">
+<button type="submit" class="w-full text-left px-4 py-3 hover:bg-white/5 text-sm font-bold text-whyite flex items-center gap-2 transition-colors">
+<span class="w-2 h-2 rounded-full bg-blue-500"></span> Completed
+</button>
+</form>
+<form action="/game/{{ game.id }}/collection" method="POST">
+<input type="hidden" name="status" value="plan_to_play">
+<button type="submit" class="w-full text-left px-4 py-3 hover:bg-white/5 text-sm font-bold text-white flex items-center gap-2 transition-colors">
+<span class="w-2 h-2 rounded-full bg-gray-500"></span> Plan to Play
+</button>
+</form>
+<form action="/game/{{ game.id }}/collection" method="POST">
+<input type="hidden" name="status" value="on_hold">
+<button type="submit" class="w-full text-left px-4 py-3 hover:bg-white/5 text-sm font-bold text-white flex items-center gap-2 transition-colors">
+<span class="w-2 h-2 rounded-full bg-yellow-500"></span> On Hold
+</button>
+</form>
+<form action="/game/{{ game.id }}/collection" method="POST">
+<input type="hidden" name="status" value="dropped">
+<button type="submit" class="w-full text-left px-4 py-3 hover:bg-white/5 text-sm font-bold text-white flex items-center gap-2 transition-colors">
+<span class="w-2 h-2 rounded-full bg-red-500"></span> Dropped
+</button>
+</form>
+{% if inCollection %}
+<div class="border-t border-white/10 my-1"></div>
+<form action="/game/{{ game.id }}/collection" method="POST">
+<input type="hidden" name="status" value="remove">
+<button type="submit" class="w-full text-left px-4 py-3 hover:bg-red-500/10 text-sm font-bold text-red-500 flex items-center gap-2 transition-colors">
+<span class="material-icons text-base">delete</span> Remove
+</button>
+</form>
+{% endif %}
+</div>
+</div>
+
+<!-- Wishlist Button -->
+<form action="/game/{{ game.id }}/wishlist" method="POST" class="inline">
+<button type="submit"
+class="{% if inWishlist %}bg-amber-600/20 text-yellow-500 border border-yellow-500/50{% else %}bg-white/10 text-white hover:bg-white/20{% endif %} px-4 py-3 rounded-xl font-bold flex items-center gap-2 transition-all backdrop-blur-md">
+<span class="material-icons {% if inWishlist %}text-yellow-500{% endif %}">{% if inWishlist %}star{% else %}star_outline{% endif %}</span>
+</button>
+</form>
+{% else %}
+<a href="/login" class="bg-primary text-white hover:bg-primary/90 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-primary/25">
+<span class="material-icons">login</span> Login to Collect
+</a>
+{% endif %}
+</div>
+</div>
+</div>
+</div>
+
+<!-- DETAIL CONTENT GRID -->
+<div class="px-4 lg:px-10 py-8 w-full">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+
+<!-- LEFT COL (Main Info) -->
+<div class="lg:col-span-2 space-y-10">
+
+<!-- About -->
+{% if game.summary %}
+<section>
+<h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-3"><span class="w-1 h-7 bg-primary rounded-full inline-block"></span> About</h2>
+<div class="relative">
+<div id="about-text" class="text-base text-slate-300 font-light leading-relaxed space-y-3 line-clamp-4">
+<p>{{ game.summary }}</p>
+{% if game.storyline %}
+<p class="text-sm text-slate-400">{{ game.storyline }}</p>
+{% endif %}
+</div>
+</div>
+<button id="about-toggle-btn" onclick="toggleAboutText()" class="mt-3 text-primary hover:text-white text-sm font-bold flex items-center gap-1 transition-colors">
+<span id="about-toggle-text">See more</span> <span class="material-icons text-lg transition-transform duration-300" id="about-toggle-icon">expand_more</span>
+</button>
+{% if game.genres or game.themes %}
+<div class="flex flex-wrap gap-2 mt-4">
+{% if game.genres %}
+{% for genre in game.genres %}
+<a href="/genre/{{ genre.id }}" class="px-3 py-1 bg-card-bg text-text-muted hover:text-white hover:bg-white/10 text-sm rounded-full transition-colors">{{ genre.name }}</a>
+{% endfor %}
+{% endif %}
+{% if game.themes %}
+{% for theme in game.themes %}
+<a href="/search?q={{ theme.name }}" class="px-3 py-1 bg-card-bg text-text-muted hover:text-white hover:bg-white/10 text-sm rounded-full transition-colors">{{ theme.name }}</a>
+{% endfor %}
+{% endif %}
+</div>
+{% endif %}
+</section>
+{% endif %}
+
+<!-- Media Section (limited) -->
+{% if (game.screenshots and game.screenshots.length > 0) or (game.videos and game.videos.length > 0) %}
+<section>
+<h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-3"><span class="w-1 h-7 bg-primary rounded-full inline-block"></span> Media</h2>
+<div class="grid grid-cols-2 gap-3">
+{% if game.videos %}
+{% for video in game.videos %}
+<div class="col-span-2 bg-card-bg aspect-video rounded-xl overflow-hidden">
+<iframe src="https://www.youtube.com/embed/{{ video.video_id }}"
+class="w-full h-full" allowfullscreen loading="lazy"
+title="{{ video.name or 'Trailer' }}"></iframe>
+</div>
+{% endfor %}
+{% endif %}
+{% if game.screenshots %}
+{% for ss in game.screenshots %}
+<button type="button" onclick="openLightbox('{{ ss.urlHD }}')"
+class="bg-card-bg aspect-video rounded-xl overflow-hidden relative group hover:opacity-90 transition-opacity cursor-zoom-in w-full text-left">
+<img src="{{ ss.url }}" alt="Screenshot {{ loop.index }}" class="w-full h-full object-cover" loading="lazy">
+<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+<span class="material-icons text-white opacity-0 group-hover:opacity-100 transition-opacity">fullscreen</span>
+</div>
+</button>
+{% endfor %}
+{% endif %}
+</div>
+</section>
+{% endif %}
+
+<!-- DLCs Section -->
+{% if game.dlcs and game.dlcs.length > 0 %}
+<section>
+<h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-3"><span class="w-1 h-7 bg-primary rounded-full inline-block"></span> DLCs & Expansions</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="dlc-container">
+{% for dlc in game.dlcs %}
+<a href="/game/{{ dlc.slug or dlc.id }}" 
+   class="dlc-item flex items-center gap-4 bg-card-bg hover:bg-hover-bg p-3 rounded-xl transition-all group border border-white/5 {% if loop.index > 3 %}hidden{% endif %}">
+<img src="{{ dlc.coverUrl }}" alt="{{ dlc.name }}" class="w-12 h-16 object-cover rounded shadow-lg group-hover:scale-105 transition-transform" loading="lazy">
+<div class="flex-1 min-w-0">
+<div class="font-bold text-white truncate group-hover:text-primary transition-colors">{{ dlc.name }}</div>
+{% if dlc.releaseDateFormatted %}
+<div class="text-xs text-text-muted mt-1">{{ dlc.releaseDateFormatted }}</div>
+{% endif %}
+</div>
+<span class="material-icons text-white/20 group-hover:text-primary transition-colors">chevron_right</span>
+</a>
+{% endfor %}
+
+{% if game.dlcs.length > 3 %}
+<button id="view-more-dlcs" onclick="toggleDLCs()" class="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 p-3 rounded-xl transition-all group border border-dashed border-white/10 text-text-muted hover:text-white font-bold text-sm">
+<span class="material-icons transition-transform duration-300 group-hover:translate-y-1">expand_more</span>
+<span>View more ({{ game.dlcs.length - 3 }} more)</span>
+</button>
+{% endif %}
+</div>
+</section>
+{% endif %}
+
+
+</div>
+
+<!-- RIGHT COL (Stats) -->
+<div class="space-y-6">
+
+<!-- SCORES -->
+<div class="grid grid-cols-2 gap-4">
+<!-- User Score (KC or IGDB) -->
+<div class="bg-card-bg p-4 rounded-xl text-center border border-white/5 flex flex-col items-center justify-center h-32">
+{% if localReviewCount and localReviewCount > 0 %}
+<div class="text-3xl font-black {% if kcScore >= 7.5 %}text-green-500{% elif kcScore >= 5 %}text-yellow-500{% else %}text-red-500{% endif %} mb-1">{{ kcScore | round(1) }}</div>
+<div class="text-[10px] font-bold text-text-muted uppercase tracking-widest">KC Score</div>
+<div class="text-[10px] text-slate-500 mt-1">{{ localReviewCount }} reviews</div>
+{% else %}
+<div class="text-3xl font-black {% if game.rating and game.rating >= 75 %}text-primary{% elif game.rating and game.rating >= 50 %}text-yellow-500{% else %}text-text-muted{% endif %} mb-1">
+{{ ((game.rating / 10) | round(1)) if game.rating else 'N/A' }}
+</div>
+<div class="text-[10px] font-bold text-text-muted uppercase tracking-widest">User Score</div>
+<div class="text-[10px] text-slate-500 mt-1">IGDB</div>
+{% endif %}
+</div>
+
+<!-- Critics Score -->
+<div class="bg-card-bg p-4 rounded-xl text-center border border-white/5 flex flex-col items-center justify-center h-32">
+<div class="text-3xl font-black {% if game.aggregated_rating and game.aggregated_rating >= 75 %}text-purple-500{% elif game.aggregated_rating and game.aggregated_rating >= 50 %}text-yellow-500{% else %}text-text-muted{% endif %} mb-1">
+{{ ((game.aggregated_rating / 10) | round(1)) if game.aggregated_rating else 'N/A' }}
+</div>
+<div class="text-[10px] font-bold text-text-muted uppercase tracking-widest">Critics Score</div>
+<div class="text-[10px] text-slate-500 mt-1">IGDB</div>
+</div>
+</div>
+
+<!-- Platforms -->
+{% if game.platforms %}
+<div class="bg-card-bg p-4 rounded-xl">
+<h4 class="text-text-muted text-[10px] font-bold uppercase tracking-wider mb-3">Platforms</h4>
+<div class="flex flex-wrap gap-2">
+{% for platform in game.platforms %}
+<span class="px-2 py-1 bg-white/5 text-white text-xs rounded font-medium">{{ platform.name }}</span>
+{% endfor %}
+</div>
+</div>
+{% endif %}
+
+<!-- Developer / Publisher -->
+<div class="bg-card-bg p-4 rounded-xl space-y-3">
+{% if game.developer %}
+<div>
+<h4 class="text-text-muted text-[10px] font-bold uppercase tracking-wider mb-1">Developer</h4>
+<span class="text-white font-medium text-sm">{{ game.developer }}</span>
+</div>
+{% endif %}
+{% if game.publisher %}
+<div>
+<h4 class="text-text-muted text-[10px] font-bold uppercase tracking-wider mb-1">Publisher</h4>
+<span class="text-white font-medium text-sm">{{ game.publisher }}</span>
+</div>
+{% endif %}
+{% if game.languages %}
+<div>
+<h4 class="text-text-muted text-[10px] font-bold uppercase tracking-wider mb-1">Languages</h4>
+<span class="text-white font-medium text-sm leading-snug block">{{ game.languages }}</span>
+</div>
+{% endif %}
+</div>
+
+<!-- Store Links (curated) -->
+{% if game.websites and game.websites.length > 0 %}
+<div class="bg-card-bg p-4 rounded-xl">
+<h4 class="text-text-muted text-[10px] font-bold uppercase tracking-wider mb-3">Links</h4>
+<div class="space-y-2">
+{% for w in game.websites %}
+<a href="{{ w.url }}" target="_blank"
+class="flex items-center justify-between p-2.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors group text-sm">
+<span class="flex items-center gap-2">
+<span class="material-icons text-base text-text-muted group-hover:text-white">{{ w.icon }}</span>
+<span class="text-slate-300 group-hover:text-white font-medium">{{ w.label }}</span>
+</span>
+<span class="material-icons text-sm text-white/30 group-hover:text-white">open_in_new</span>
+</a>
+{% endfor %}
+</div>
+</div>
+{% endif %}
+
+<!-- Similar games -->
+{% if game.similar_games and game.similar_games.length > 0 %}
+<div>
+<h4 class="text-text-muted text-[10px] font-bold uppercase tracking-wider mb-3 px-1">Similar games</h4>
+<div class="space-y-2">
+{% for sg in game.similar_games %}
+<a href="/game/{{ sg.slug or sg.id }}" class="flex items-center gap-3 bg-card-bg hover:bg-hover-bg p-3 rounded-xl transition-colors group">
+<img src="{{ sg.coverUrl }}" alt="{{ sg.name }}" class="w-10 h-14 object-cover rounded">
+<div class="flex-1 min-w-0">
+<div class="font-bold text-sm text-white truncate group-hover:text-primary transition-colors">{{ sg.name }}</div>
+{% if sg.rating %}
+<span class="text-xs {% if (sg.rating/10) >= 7.5 %}text-green-500{% elif (sg.rating/10) >= 5 %}text-yellow-500{% else %}text-red-400{% endif %} font-bold">{{ (sg.rating / 10) | round(1) }}</span>
+{% endif %}
+</div>
+</a>
+{% endfor %}
+</div>
+</div>
+{% endif %}
+</div>
+
+</div>
+</div>
+
+
+<div class="px-4 lg:px-10 py-12 border-t border-white/5 mt-10">
+    <div class="max-w-4xl mx-auto">
+        <!-- REVIEWS SECTION (Moved to Bottom) -->
+        <section id="reviews">
+            <h2 class="text-3xl font-black text-white mb-8 flex items-center gap-3"><span class="w-1.5 h-8 bg-primary rounded-full inline-block"></span> User Reviews
+            {% if reviewCount %}<span class="text-base font-bold text-text-muted opacity-50 ml-2">({{ reviewCount }})</span>{% endif %}
+            </h2>
+
+            <!-- Average Score Banner -->
+            <div class="bg-gradient-to-r from-[#1A1A1D] to-[#252529] rounded-2xl p-8 mb-10 flex flex-col md:flex-row items-center justify-between border border-white/5 shadow-2xl relative overflow-hidden group">
+                <div class="flex items-center gap-8 relative z-10">
+                    <div class="bg-black/40 rounded-2xl p-6 min-w-[120px] text-center border border-white/10 shadow-inner backdrop-blur-xl">
+                        {% if avgUserScore %}
+                        <span class="text-6xl font-black {% if avgUserScore >= 7.5 %}text-green-400{% elif avgUserScore >= 5 %}text-yellow-500{% else %}text-red-400{% endif %} leading-none block tracking-tighter">{{ avgUserScore | round(1) }}</span>
+                        {% else %}
+                        <span class="text-6xl font-black text-white/10 leading-none block tracking-tighter">-</span>
+                        {% endif %}
+                        <span class="text-xs text-zinc-500 font-black uppercase tracking-[0.2em] block mt-2">out of 10</span>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center gap-1">
+                        {% for i in range(1, 11) %}
+                        {% set full = avgUserScore >= i %}
+                        <span class="material-icons text-xl {% if full %}text-yellow-500{% else %}text-white/5{% endif %}">
+                            {% if full %}star{% else %}star_outline{% endif %}
+                        </span>
+                        {% endfor %}
+                        </div>
+                        <div class="text-sm text-zinc-400 font-bold uppercase tracking-wider">
+                        {% if reviewCount and reviewCount > 0 %}
+                        Based on <strong class="text-white">{{ reviewCount }}</strong> community review{{ 's' if reviewCount != 1 }}
+                        {% else %}
+                        No reviews yet. Be the first to rate!
+                        {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <a href="#review-form" class="mt-6 md:mt-0 bg-primary hover:bg-white hover:text-black text-white px-8 py-4 rounded-xl font-black transition-all shadow-xl shadow-primary/20 active:scale-95 uppercase text-xs tracking-widest flex items-center gap-2">
+                    <span class="material-icons text-sm">edit</span> Write a Review
+                </a>
+            </div>
+
+            <!-- Review Form -->
+            <div id="review-form" class="mb-12 scroll-mt-20">
+                {% if user %}
+                    {% if userReview %}
+                    <div class="bg-card-bg/30 rounded-2xl p-8 border border-white/10 backdrop-blur-sm">
+                        <h3 class="font-black text-xl text-white mb-6 uppercase tracking-wider">Update Your Review</h3>
+                        <form action="/game/{{ game.id }}/review" method="POST" class="space-y-8">
+                            <div>
+                                <label class="block text-xs font-black text-text-muted uppercase tracking-[0.2em] mb-4">Your Rating</label>
+                                <div class="bg-black/40 rounded-2xl p-8 border border-white/5 flex flex-col items-center gap-6">
+                                    <div class="flex gap-1">
+                                        {% for i in range(1, 11) %}
+                                        <button type="button" 
+                                            onclick="setEditScore({{ i }})" 
+                                            onmouseenter="syncStars('edit', {{ i }}, true)"
+                                            onmouseleave="syncStars('edit', document.getElementById('edit-score-input').value, false)"
+                                            class="star-btn-edit relative group h-10 w-10 flex items-center justify-center transition-transform hover:scale-110 active:scale-95" 
+                                            data-val="{{ i }}">
+                                            <span id="edit-star-{{ i }}" class="material-icons text-3xl text-white/5 transition-colors edit-star-display">star_outline</span>
+                                        </button>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <input type="hidden" name="score" id="edit-score-input" value="{{ userReview.score }}">
+                                        <span id="edit-score-display" class="text-5xl font-black">{{ userReview.score if userReview else '7' }}</span>
+                                        <span class="text-xl text-text-muted font-black opacity-30 mt-1">/ 10</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black text-text-muted uppercase tracking-[0.2em] mb-4">Your Thoughts</label>
+                                <textarea name="content" rows="4" required placeholder="Update your review..."
+                                class="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-base">{{ userReview.content }}</textarea>
+                            </div>
+                            <button type="submit" class="bg-primary hover:bg-white hover:text-black text-white px-10 py-4 rounded-xl font-black transition-all shadow-xl shadow-primary/20 active:scale-95 uppercase text-sm tracking-widest">
+                                Update Review
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="bg-card-bg/30 rounded-2xl p-8 border border-white/10 backdrop-blur-sm">
+                        <h3 class="font-black text-xl text-white mb-6 uppercase tracking-wider">Share your experience</h3>
+                        <form action="/game/{{ game.id }}/review" method="POST" class="space-y-8">
+                            <div>
+                                <label class="block text-xs font-black text-text-muted uppercase tracking-[0.2em] mb-4">Select Rating</label>
+                                <div class="bg-black/40 rounded-2xl p-8 border border-white/5 flex flex-col items-center gap-6">
+                                    <div class="flex gap-1">
+                                        {% for i in range(1, 11) %}
+                                        <button type="button" 
+                                            onclick="setNewScore({{ i }})" 
+                                            onmouseenter="syncStars('new', {{ i }}, true)"
+                                            onmouseleave="syncStars('new', document.getElementById('new-score-input').value, false)"
+                                            class="star-btn-new relative group h-10 w-10 flex items-center justify-center transition-transform hover:scale-110 active:scale-95" 
+                                            data-val="{{ i }}">
+                                            <span id="new-star-{{ i }}" class="material-icons text-3xl text-white/5 transition-colors new-star-display">star_outline</span>
+                                        </button>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="flex items-center gap-3">
+                                        <input type="hidden" name="score" id="new-score-input" value="7">
+                                        <span id="new-score-display" class="text-5xl font-black text-yellow-500">7</span>
+                                        <span class="text-xl text-text-muted font-black opacity-30 mt-1">/ 10</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-black text-text-muted uppercase tracking-[0.2em] mb-4">Your Review</label>
+                                <textarea name="content" rows="4" required placeholder="What did you think of the game? Gameplay, story, graphics..."
+                                class="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-base"></textarea>
+                            </div>
+                            <button type="submit" class="bg-primary hover:bg-white hover:text-black text-white px-10 py-4 rounded-xl font-black transition-all shadow-xl shadow-primary/20 active:scale-95 uppercase text-sm tracking-widest">
+                                Submit Review
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="bg-card-bg/30 rounded-2xl p-10 text-center border border-white/10 backdrop-blur-sm">
+                        <span class="material-icons text-5xl text-white/10 mb-4 block">lock</span>
+                        <p class="text-text-muted mb-6 font-bold">You must be logged in to leave a review.</p>
+                        <a href="/login?redirect=/game/{{ game.id }}#review-form" class="bg-white text-black hover:bg-primary hover:text-white px-8 py-3 rounded-xl font-black transition-all inline-block uppercase text-xs tracking-widest active:scale-95">Log In Now</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Existing Reviews List -->
+            {% if reviews and reviews.length > 0 %}
+                <div class="grid grid-cols-1 gap-6">
+                    {% for review in reviews %}
+                    <div class="bg-card-bg/40 rounded-2xl p-6 border border-white/5 hover:border-primary/20 transition-all group shadow-lg">
+                        <div class="flex items-start justify-between mb-5">
+                            <div class="flex items-center gap-4">
+                                <a href="/profile/{{ review.user_id or review.userId }}" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-purple-600/20 border border-white/10 flex items-center justify-center text-primary font-black text-xl shadow-inner overflow-hidden hover:scale-105 transition-transform">
+                                    {% if review.avatar_url %}
+                                        <img src="{{ review.avatar_url }}" alt="{{ review.username }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                        {{ review.username[0] | upper }}
+                                    {% endif %}
+                                </a>
+                                <div>
+                                    <a href="/profile/{{ review.user_id or review.userId }}" class="font-black text-white block leading-none mb-1 text-lg hover:text-primary transition-colors">{{ review.username }}</a>
+                                    <span class="text-xs text-text-muted font-bold uppercase tracking-wider opacity-60">{{ review.created_at | timeAgo }}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="flex gap-0.5">
+                                    {% for i in range(1, 11) %}
+                                    <span class="material-icons text-[10px] {% if review.score >= i %}text-primary{% else %}text-white/5{% endif %}">
+                                        {% if review.score >= i %}star{% else %}star_outline{% endif %}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                                <span class="bg-black/40 px-3 py-1.5 rounded-xl text-lg font-black border border-white/10 shadow-inner
+                                    {% if review.score >= 8 %}text-green-400{% elif review.score >= 5 %}text-yellow-400{% else %}text-red-400{% endif %}">
+                                    {{ review.score }}<span class="text-xs opacity-30 ml-0.5 font-bold">/10</span>
+                                </span>
+                            </div>
+                        </div>
+                        <p class="text-slate-300 text-base leading-relaxed mb-6 font-light pl-16">"{{ review.content }}"</p>
+                        
+                        {% if user %}
+                        <div class="flex justify-end border-t border-white/5 pt-4 gap-4">
+                            {% if user.id != review.user_id %}
+                                <button type="button" 
+                                    onclick="openReportModal({{ review.id }})" 
+                                    class="text-text-muted hover:text-orange-500 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 transition-colors">
+                                    <span class="material-icons text-sm">flag</span> Report
+                                </button>
+                            {% endif %}
+                            
+                            {% if user.id == review.user_id %}
+                                <form action="/game/{{ game.id }}/review/delete" method="POST" onsubmit="return confirm('Delete your review?');">
+                                    <button type="submit" class="text-text-muted hover:text-red-500 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 transition-colors">
+                                        <span class="material-icons text-sm">delete</span> Delete
+                                    </button>
+                                </form>
+                            {% elif user.role == 'admin' %}
+                                <form action="/admin/review/delete/{{ review.id }}" method="POST" onsubmit="return confirm('Admin: Delete this review?');">
+                                    <input type="hidden" name="redirectUrl" value="/game/{{ game.id }}">
+                                    <button type="submit" class="text-text-muted hover:text-red-500 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 transition-colors">
+                                        <span class="material-icons text-sm">delete_forever</span> Admin Delete
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="py-20 text-center bg-black/20 rounded-3xl border border-dashed border-white/10">
+                    <span class="material-icons text-6xl text-white/5 mb-4 block">rate_review</span>
+                    <p class="text-text-muted font-bold">No community reviews yet. Share your thoughts!</p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+
+<!-- Back Button -->
+<div class="px-4 lg:px-10 pb-8">
+<a href="/" class="bg-card-bg hover:bg-hover-bg text-white px-5 py-2.5 rounded-lg font-bold transition-colors inline-flex items-center gap-2 text-sm">
+<span class="material-icons text-base">arrow_back</span> Back to catalogue
+</a>
+</div>
+
+{% endif %}
+
+<!-- Custom Report Modal -->
+<div id="report-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-300 opacity-0">
+    <div class="bg-[#1a1a1a] w-full max-w-md rounded-3xl border border-white/10 shadow-2xl overflow-hidden transform scale-95 transition-all duration-300">
+        <div class="p-8">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500">
+                    <span class="material-icons">flag</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-white leading-none">Report Review</h3>
+                    <p class="text-xs text-text-muted mt-2 font-bold uppercase tracking-wider">Help keep the community safe</p>
+                </div>
+            </div>
+            
+            <form id="report-modal-form" method="POST" class="space-y-6">
+                <div>
+                    <label class="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">Reason for report</label>
+                    <textarea name="reason" id="report-reason" rows="4" required 
+                        placeholder="Please describe why this review should be removed (e.g. Offensive language, Spam, Wrong game...)"
+                        class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-4 text-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all text-sm resize-none"></textarea>
+                </div>
+                
+                <div class="flex gap-4">
+                    <button type="button" onclick="closeReportModal()" 
+                        class="flex-1 bg-white/5 hover:bg-white/10 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-all active:scale-95">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                        class="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-orange-500/20 active:scale-95">
+                        Send Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleCollectionDropdown(event) {
+event.stopPropagation()                                          ;
+const dropdown = document.getElementById('collection-dropdown');
+if (dropdown) {
+dropdown.classList.toggle('hidden');
+}
+}
+
+// Close dropdown when clicking outside
+window.addEventListener('click', function(event) {
+const dropdown = document.getElementById('collection-dropdown');
+if (dropdown && !dropdown.classList.contains('hidden')) {
+// Check if click is inside the dropdown
+if (!event.target.closest('#collection-dropdown') && !event.target.closest('button[onclick="toggleCollectionDropdown(event)"]')) {
+dropdown.classList.add('hidden');
+}
+}
+})                                                                                                                                 ;
+
+// Handle 'About' text expand/collapse
+document.addEventListener('DOMContentLoaded', () => {
+const textDiv = document.getElementById('about-text');
+const btn = document.getElementById('about-toggle-btn');
+if (textDiv && btn) {
+// Check if text is actually clamped
+if (textDiv.scrollHeight <= textDiv.clientHeight) {
+btn.style.display = 'none';
+}
+}
+})                                                       ;
+
+function toggleAboutText() {
+const textDiv = document.getElementById('about-text');
+const textSpan = document.getElementById('about-toggle-text');
+const icon = document.getElementById('about-toggle-icon');
+
+if (textDiv.classList.contains('line-clamp-4')) {
+textDiv.classList.remove('line-clamp-4');
+textSpan.textContent = 'See less';
+icon.style.transform = 'rotate(180deg)';
+} else {
+textDiv.classList.add('line-clamp-4');
+textSpan.textContent = 'See more';
+icon.style.transform = 'rotate(0deg)';
+}
+}
+
+
+function getScoreColor(val) {
+    if (val >= 8) return '#4ade80';
+    if (val >= 5) return '#eab308';
+    return '#f87171';
+}
+
+function syncStars(type, val, isHover = false) {
+    const display = document.getElementById(`${type}-score-display`);
+    const valInt = parseInt(val) || 0;
+    
+    for (let i = 1; i <= 10; i++) {
+        const star = document.getElementById(`${type}-star-${i}`);
+        if (!star) continue;
+        
+        if (i <= valInt) {
+            star.textContent = 'star';
+            star.style.color = isHover ? '#fbbf24' : '#eab308'; // Brighter if hovering
+            star.style.opacity = '1';
+        } else {
+            star.textContent = 'star_outline';
+            star.style.color = 'rgba(255,255,255,0.05)';
+            star.style.opacity = isHover ? '0.3' : '1';
+        }
+    }
+    
+    if (display) {
+        display.textContent = valInt;
+        display.style.color = getScoreColor(valInt);
+        if (isHover) display.style.opacity = '0.7';
+        else display.style.opacity = '1';
+    }
+}
+
+function setNewScore(val) {
+    const input = document.getElementById('new-score-input');
+    if (input) input.value = val;
+    syncStars('new', val);
+}
+
+function setEditScore(val) {
+    const input = document.getElementById('edit-score-input');
+    if (input) input.value = val;
+    syncStars('edit', val);
+}
+
+function openReportModal(reviewId) {
+    const modal = document.getElementById('report-modal');
+    const form = document.getElementById('report-modal-form');
+    if (!modal || !form) return;
+    
+    // Set form action dynamically
+    form.action = `/game/{{ game.id }}/review/${reviewId}/report`;
+    
+    // Clear textarea
+    document.getElementById('report-reason').value = '';
+    
+    // Show modal
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    
+    // Animate in
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('div').classList.remove('scale-95');
+        modal.querySelector('div').classList.add('scale-100');
+    }, 10);
+    
+    // Focus textarea
+    setTimeout(() => document.getElementById('report-reason').focus(), 300);
+}
+
+function closeReportModal() {
+    const modal = document.getElementById('report-modal');
+    if (!modal) return;
+    
+    // Animate out
+    modal.classList.add('opacity-0');
+    modal.querySelector('div').classList.remove('scale-100');
+    modal.querySelector('div').classList.add('scale-95');
+    
+    // Hide after animation
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }, 300);
+}
+
+// Close and handle modal clicks
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('report-modal');
+    if (e.target === modal) closeReportModal();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const newIn = document.getElementById('new-score-input');
+    if (newIn) syncStars('new', parseInt(newIn.value));
+    
+    const editIn = document.getElementById('edit-score-input');
+    if (editIn) syncStars('edit', parseInt(editIn.value));
+});
+
+function toggleDLCs() {
+    const items = document.querySelectorAll('.dlc-item.hidden');
+    const btn = document.getElementById('view-more-dlcs');
+    
+    items.forEach(item => {
+        item.classList.remove('hidden');
+        item.classList.add('animate-in', 'fade-in', 'zoom-in', 'duration-300');
+    });
+    
+    if (btn) btn.remove();
+}
+</script>
+{% endblock %}

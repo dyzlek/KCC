@@ -1,0 +1,305 @@
+{% extends "layout.njk" %}
+
+{% block head %}
+<style>
+    .game-card {
+        height: 100%;
+        width: 50%;
+        position: absolute;
+        transition: all 0.8s cubic-bezier(0.7, 0, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-size: cover;
+        background-position: center;
+        overflow: hidden;
+    }
+
+    .game-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%);
+        z-index: 1;
+    }
+
+    .game-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding: 2rem;
+        width: 100%;
+    }
+
+    .vs-badge {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        width: 80px;
+        height: 80px;
+        background: #0d46f2;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-size: 1.5rem;
+        box-shadow: 0 0 40px rgba(13, 70, 242, 0.6);
+        border: 4px solid #fff;
+    }
+
+    .score-banner {
+        position: absolute;
+        bottom: 2rem;
+        left: 2rem;
+        z-index: 20;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 0.5rem 1.5rem;
+        border-radius: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        font-weight: 700;
+        backdrop-blur: 10px;
+    }
+
+    .game-container {
+        position: relative;
+        height: calc(100vh - 72px);
+        width: 100%;
+        overflow: hidden;
+        background: #000;
+    }
+
+    .card-left { left: 0; }
+    .card-right { left: 50%; }
+    .card-out { left: -50%; opacity: 0; }
+    .card-in { left: 100%; }
+
+    .btn-guess {
+        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 800;
+    }
+
+    .btn-guess:hover {
+        transform: scale(1.05);
+    }
+
+    .ccu-number {
+        font-size: 5rem;
+        font-weight: 900;
+        margin: 1rem 0;
+        line-height: 1;
+        color: #fff;
+        text-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .ccu-revealed {
+        animation: count-up 0.5s ease-out forwards;
+    }
+
+    @keyframes count-up {
+        from { transform: scale(0.5); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    #game-over-overlay {
+        background: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(10px);
+    }
+</style>
+{% endblock %}
+
+{% block mainClass %}p-0{% endblock %}
+
+{% block content %}
+<div class="game-container" id="game-main">
+    <!-- Score -->
+    <div class="score-banner">
+        Score: <span id="score-val" class="text-primary">0</span>
+    </div>
+
+    <!-- The cards will be injected here -->
+    <div id="cards-wrapper" class="relative h-full w-full"></div>
+
+    <!-- VS Badge -->
+    <div class="vs-badge">VS</div>
+
+    <!-- Game Over Overlay -->
+    <div id="game-over-overlay" class="fixed inset-0 z-[100] hidden flex flex-col items-center justify-center text-center p-6">
+        <h1 class="text-6xl font-black mb-2 text-white italic">GAME OVER</h1>
+        <p class="text-xl text-white/60 mb-8">Your final score is</p>
+        <div class="text-[12rem] font-black text-primary leading-none mb-12" id="final-score">0</div>
+        <button onclick="startGame()" class="bg-white text-black px-12 py-5 rounded-full font-black text-xl hover:bg-primary hover:text-white transition-all transform hover:scale-105 uppercase tracking-tighter">
+            Play Again
+        </button>
+        <a href="/higher-lower" class="mt-8 text-white/40 hover:text-white transition-colors underline decoration-primary underline-offset-8">Back to Menu</a>
+    </div>
+</div>
+
+<!-- Card Template -->
+<template id="card-template">
+    <div class="game-card">
+        <div class="game-content">
+            <h2 class="game-name text-2xl font-bold opacity-70 uppercase tracking-widest"></h2>
+            
+            <div class="guess-controls flex flex-col gap-4 mt-8 items-center hidden">
+                <button class="btn-higher btn-guess bg-primary hover:bg-primary/80 px-10 py-4 rounded-full flex items-center gap-2">
+                    <span class="material-icons">expand_less</span> Higher
+                </button>
+                <div class="text-sm font-bold opacity-50 uppercase tracking-widest">than</div>
+                <button class="btn-lower btn-guess border-2 border-white/20 hover:bg-white/10 px-10 py-4 rounded-full flex items-center gap-2">
+                    <span class="material-icons">expand_more</span> Lower
+                </button>
+            </div>
+
+            <div class="ccu-display">
+                <div class="ccu-value ccu-number">0</div>
+                <p class="text-white/50 font-medium uppercase tracking-tighter">Concurrent Players</p>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentScore = 0;
+    let isGuessing = false;
+    let card1, card2;
+
+    async function startGame() {
+        const wrapper = document.getElementById('cards-wrapper');
+        wrapper.innerHTML = '';
+        document.getElementById('game-over-overlay').classList.add('hidden');
+        document.getElementById('score-val').innerText = '0';
+        currentScore = 0;
+        
+        try {
+            const res = await fetch('/api/higher-lower/start');
+            const data = await res.json();
+            
+            card1 = createCard(data.game1, 'card-left');
+            card2 = createCard(data.game2, 'card-right', true);
+            
+            wrapper.appendChild(card1);
+            wrapper.appendChild(card2);
+            
+            animateValue(card1.querySelector('.ccu-value'), 0, data.game1.ccu, 1000);
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    function createCard(gameData, positionClass, isGuess = false) {
+        const temp = document.getElementById('card-template');
+        const clone = temp.content.cloneNode(true);
+        const card = clone.querySelector('.game-card');
+        
+        card.classList.add(positionClass);
+        card.style.backgroundImage = `url('${gameData.image}')`;
+        card.querySelector('.game-name').innerText = gameData.name;
+        
+        if (isGuess) {
+            card.querySelector('.guess-controls').classList.remove('hidden');
+            card.querySelector('.ccu-display').classList.add('hidden');
+            
+            card.querySelector('.btn-higher').onclick = () => makeGuess('higher');
+            card.querySelector('.btn-lower').onclick = () => makeGuess('lower');
+        }
+        
+        return card;
+    }
+
+    async function makeGuess(guess) {
+        if (isGuessing) return;
+        isGuessing = true;
+
+        try {
+            const res = await fetch('/api/higher-lower/guess', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ guess })
+            });
+            const data = await res.json();
+
+            // Reveal CCU
+            card2.querySelector('.guess-controls').classList.add('hidden');
+            card2.querySelector('.ccu-display').classList.remove('hidden');
+            
+            await animateValue(card2.querySelector('.ccu-value'), 0, data.actualCcu, 800);
+
+            if (data.correct) {
+                setTimeout(() => nextRound(data), 1200);
+            } else {
+                setTimeout(() => showGameOver(data.score), 1000);
+            }
+        } catch (err) {
+            console.error(err);
+            isGuessing = false;
+        }
+    }
+
+    function nextRound(data) {
+        currentScore = data.score;
+        document.getElementById('score-val').innerText = currentScore;
+
+        const wrapper = document.getElementById('cards-wrapper');
+        const oldCard1 = card1;
+        const oldCard2 = card2;
+        
+        // New card comes in from the right
+        const newCard = createCard(data.nextGame, 'card-in', true);
+        wrapper.appendChild(newCard);
+
+        // Transition classes
+        oldCard1.classList.add('card-out');
+        oldCard2.classList.remove('card-right');
+        oldCard2.classList.add('card-left');
+        
+        // Wait for next tick to start "in" animation
+        setTimeout(() => {
+            newCard.classList.remove('card-in');
+            newCard.classList.add('card-right');
+        }, 50);
+
+        // After animation ends
+        setTimeout(() => {
+            oldCard1.remove();
+            card1 = oldCard2;
+            card2 = newCard;
+            isGuessing = false;
+        }, 800);
+    }
+
+    function showGameOver(score) {
+        document.getElementById('final-score').innerText = score;
+        document.getElementById('game-over-overlay').classList.remove('hidden');
+        isGuessing = false;
+    }
+
+    function animateValue(obj, start, end, duration) {
+        return new Promise(resolve => {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const currentVal = Math.floor(progress * (end - start) + start);
+                obj.innerHTML = currentVal.toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    resolve();
+                }
+            };
+            window.requestAnimationFrame(step);
+        });
+    }
+
+    window.addEventListener('load', startGame);
+</script>
+{% endblock %}

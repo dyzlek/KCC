@@ -1,0 +1,339 @@
+{% extends "layout.njk" %}
+
+{% block head %}
+<style>
+/* Custom Table Styles */
+th {
+text-align: left                                   ;
+padding: 1rem                                      ;
+color:                                             #757575;
+font-size: 0.75rem                                 ;
+text-transform: uppercase                          ;
+letter-spacing: 0.05em                             ;
+border-bottom: 1px solid rgba(255, 255, 255, 0.05) ;
+}
+td {
+padding: 1rem                                      ;
+color: white                                       ;
+border-bottom: 1px solid rgba(255, 255, 255, 0.05) ;
+vertical-align: middle                             ;
+}
+tr:hover td {
+background-color: rgba(255, 255, 255, 0.02)        ;
+}
+</style>
+{% endblock %}
+
+{% extends "layout.njk" %}
+
+{% block content %}
+<div class="flex flex-col md:flex-row gap-8">
+
+<!-- ADMIN SIDEBAR -->
+<aside class="w-full md:w-64 flex-shrink-0">
+<h1 class="text-2xl font-black text-white mb-6 px-2 uppercase tracking-wider">Admin Panel</h1>
+
+<nav class="space-y-1">
+<a href="/admin?tab=users"
+class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold {% if tab == 'users' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}text-text-muted hover:bg-white/5 hover:text-white{% endif %}">
+<span class="material-icons">people</span> Users
+{% if stats.totalUsers %}<span class="ml-auto text-xs opacity-60 bg-black/20 px-2 py-0.5 rounded-full">{{ stats.totalUsers }}</span>{% endif %}
+</a>
+<a href="/admin?tab=moderation"
+class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold {% if tab == 'moderation' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}text-text-muted hover:bg-white/5 hover:text-white{% endif %}">
+<span class="material-icons">gavel</span> Moderation
+{% if stats.pendingReports > 0 %}
+<span class="ml-auto text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">{{ stats.pendingReports }}</span>
+{% endif %}
+</a>
+
+<a href="/admin?tab=logs"
+class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold {% if tab == 'logs' %}bg-primary text-white shadow-lg shadow-primary/20{% else %}text-text-muted hover:bg-white/5 hover:text-white{% endif %}">
+<span class="material-icons">history</span> Logs
+</a>
+</nav>
+
+<!-- Quick Stats -->
+<div class="mt-8 bg-card-bg p-4 rounded-xl border border-white/5">
+<h3 class="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">Overview</h3>
+<div class="space-y-3">
+<div class="flex justify-between text-sm">
+<span class="text-slate-400">Total Reviews</span>
+<span class="text-white font-bold">{{ stats.totalReviews }}</span>
+</div>
+<div class="flex justify-between text-sm">
+<span class="text-slate-400">Banned Users</span>
+<span class="text-red-400 font-bold">{{ stats.bannedUsers }}</span>
+</div>
+</div>
+</div>
+</aside>
+
+<!-- CONTENT AREA -->
+<div class="flex-1 min-w-0">
+
+<!-- USERS TAB -->
+{% if tab == 'users' %}
+<section>
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-xl font-bold text-white">Manage Users</h2>
+<form action="/admin" method="GET" class="relative">
+<input type="hidden" name="tab" value="users">
+<span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-lg">search</span>
+<input type="text" name="search" value="{{ searchQuery }}" placeholder="Search users..."
+class="bg-card-bg border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary w-64">
+</form>
+</div>
+
+<div class="bg-card-bg border border-white/5 rounded-xl overflow-hidden">
+<table class="w-full text-sm text-left">
+<thead class="bg-white/5 text-text-muted uppercase text-xs font-bold">
+<tr>
+<th class="px-6 py-4">User</th>
+<th class="px-6 py-4">Role</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4">Joined</th>
+<th class="px-6 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+{% for u in users %}
+<tr class="hover:bg-white/[0.02] transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white font-bold text-xs">
+{{ u.username[0] | upper }}
+</div>
+<div>
+<div class="font-bold text-white">{{ u.username }}</div>
+<div class="text-xs text-text-muted">{{ u.email }}</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+{% if u.role == 'admin' %}
+<span class="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-500/20">Admin</span>
+{% else %}
+<span class="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-bold border border-primary/20">User</span>
+{% endif %}
+</td>
+<td class="px-6 py-4">
+{% if u.is_banned %}
+<span class="text-red-500 font-bold flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Banned</span>
+{% else %}
+<span class="text-green-500 font-bold flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active</span>
+{% endif %}
+</td>
+<td class="px-6 py-4 text-text-muted">{{ u.created_at | dateFormat }}</td>
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+{% if u.role != 'admin' or u.id != user.id %}
+<!-- Ban/Unban -->
+{% if u.is_banned %}
+<form action="/admin/unban/{{ u.id }}" method="POST">
+<button title="Unban" class="p-1.5 text-text-muted hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-colors"><span class="material-icons text-lg">check_circle</span></button>
+</form>
+{% else %}
+<form action="/admin/ban/{{ u.id }}" method="POST" onsubmit="return confirm('Ban {{ u.username }}?');">
+<button title="Ban" class="p-1.5 text-text-muted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"><span class="material-icons text-lg">block</span></button>
+</form>
+{% endif %}
+
+<!-- Roles -->
+{% if u.role == 'user' %}
+<form action="/admin/promote/{{ u.id }}" method="POST" onsubmit="return confirm('Promote {{ u.username }} to Admin?');">
+<button title="Promote to Admin" class="p-1.5 text-text-muted hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"><span class="material-icons text-lg">arrow_upward</span></button>
+</form>
+{% endif %}
+{% if u.role == 'admin' %}
+<form action="/admin/demote/{{ u.id }}" method="POST" onsubmit="return confirm('Demote {{ u.username }} to User?');">
+<button title="Demote to User" class="p-1.5 text-text-muted hover:text-orange-400 hover:bg-orange-500/10 rounded-lg transition-colors"><span class="material-icons text-lg">arrow_downward</span></button>
+</form>
+{% endif %}
+
+<!-- Delete -->
+<form action="/admin/delete/{{ u.id }}" method="POST" onsubmit="return confirm('Permanently delete {{ u.username }}? This cannot be undone.');">
+<button title="Delete Account" class="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"><span class="material-icons text-lg">delete</span></button>
+</form>
+{% endif %}
+</div>
+</td>
+</tr>
+{% else %}
+<tr><td colspan="5" class="px-6 py-8 text-center text-text-muted">No users found.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+{% endif %}
+
+<!-- MODERATION TAB -->
+{% if tab == 'moderation' %}
+<section>
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-xl font-bold text-white">Reports & Tickets</h2>
+<div class="flex items-center gap-2 text-sm font-bold">
+<a href="/admin?tab=moderation&status=all"
+class="px-3 py-1.5 rounded-lg transition-colors {% if statusFilter == 'all' %}bg-primary text-white{% else %}text-text-muted hover:text-white hover:bg-white/5{% endif %}">
+All
+</a>
+<a href="/admin?tab=moderation&status=pending"
+class="px-3 py-1.5 rounded-lg transition-colors {% if statusFilter == 'pending' %}bg-primary text-white{% else %}text-text-muted hover:text-white hover:bg-white/5{% endif %}">
+Pending
+{% if stats.pendingReports > 0 %}<span class="ml-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{{ stats.pendingReports }}</span>{% endif %}
+</a>
+<a href="/admin?tab=moderation&status=resolved"
+class="px-3 py-1.5 rounded-lg transition-colors {% if statusFilter == 'resolved' %}bg-primary text-white{% else %}text-text-muted hover:text-white hover:bg-white/5{% endif %}">
+Resolved
+</a>
+<a href="/admin?tab=moderation&status=dismissed"
+class="px-3 py-1.5 rounded-lg transition-colors {% if statusFilter == 'dismissed' %}bg-primary text-white{% else %}text-text-muted hover:text-white hover:bg-white/5{% endif %}">
+Dismissed
+</a>
+</div>
+</div>
+
+<div class="bg-card-bg border border-white/5 rounded-xl overflow-hidden">
+<table class="w-full text-sm text-left">
+<thead class="bg-white/5 text-text-muted uppercase text-xs font-bold">
+<tr>
+<th class="px-4 py-4">#</th>
+<th class="px-4 py-4">Reporter</th>
+<th class="px-4 py-4">Reported User</th>
+<th class="px-4 py-4">Reason</th>
+<th class="px-4 py-4">Status</th>
+<th class="px-4 py-4">Date</th>
+<th class="px-4 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+{% for r in reports %}
+<tr class="hover:bg-white/[0.02] transition-colors align-top">
+<td class="px-4 py-4 text-text-muted font-mono text-xs">#{{ r.id }}</td>
+<td class="px-4 py-4 text-white font-bold whitespace-nowrap">{{ r.reporter_name }}</td>
+<td class="px-4 py-4 text-slate-300 whitespace-nowrap">{{ r.reported_user_name }}</td>
+<td class="px-4 py-4 text-slate-400 max-w-xs">
+<div class="truncate max-w-[200px]" title="{{ r.reason }}">{{ r.reason }}</div>
+{% if r.review_content %}
+<div class="text-xs text-text-muted mt-1 italic truncate max-w-[200px]" title="{{ r.review_content }}">"{{ r.review_content }}"</div>
+{% endif %}
+</td>
+<td class="px-4 py-4 whitespace-nowrap">
+{% if r.status == 'pending' %}
+<span class="bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded text-xs font-bold border border-yellow-500/20">Pending</span>
+{% elif r.status == 'resolved' %}
+<span class="bg-green-500/10 text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-500/20">Resolved</span>
+{% elif r.status == 'dismissed' %}
+<span class="bg-slate-500/10 text-slate-400 px-2 py-1 rounded text-xs font-bold border border-slate-500/20">Dismissed</span>
+{% endif %}
+</td>
+<td class="px-4 py-4 text-text-muted text-xs whitespace-nowrap">{{ r.created_at | timeAgo }}</td>
+<td class="px-4 py-4 text-right">
+{% if r.status == 'pending' %}
+<div class="flex items-center justify-end gap-2">
+
+<form action="/admin/review/delete/{{ r.review_id }}" method="POST" onsubmit="return confirm('Delete this review permanently?');">
+<button title="Delete review" class="px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg text-xs font-bold transition-colors border border-red-500/20">
+Delete
+</button>
+</form>
+<form action="/admin/report/dismiss/{{ r.id }}" method="POST">
+<button title="Dismiss report" class="px-3 py-1.5 text-text-muted hover:text-white hover:bg-white/5 rounded-lg text-xs font-bold transition-colors">
+Dismiss
+</button>
+</form>
+</div>
+{% else %}
+<span class="text-text-muted text-xs">—</span>
+{% endif %}
+</td>
+</tr>
+{% else %}
+<tr>
+<td colspan="7" class="px-6 py-12 text-center text-text-muted">
+No reports found.
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+{% endif %}
+
+<!-- LOGS TAB -->
+{% if tab == 'logs' %}
+<section>
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-xl font-bold text-white">Action Logs</h2>
+<form action="/admin" method="GET" class="relative">
+<input type="hidden" name="tab" value="logs">
+<span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-lg">search</span>
+<input type="text" name="logSearch" value="{{ logSearch }}" placeholder="Search logs..."
+class="bg-card-bg border border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary w-56">
+{% if logSearch %}
+<a href="/admin?tab=logs" class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors">
+<span class="material-icons text-base">close</span>
+</a>
+{% endif %}
+</form>
+</div>
+<div class="bg-card-bg border border-white/5 rounded-xl overflow-hidden">
+<table class="w-full text-sm text-left">
+<thead class="bg-white/5 text-text-muted uppercase text-xs font-bold">
+<tr>
+<th class="px-6 py-4">Admin</th>
+<th class="px-6 py-4">Action</th>
+<th class="px-6 py-4">Details</th>
+<th class="px-6 py-4 text-right whitespace-nowrap">Time</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+{% for log in logs %}
+<tr class="hover:bg-white/[0.02] transition-colors align-top">
+<td class="px-6 py-4 text-white font-bold whitespace-nowrap">{{ log.admin_name }}</td>
+<td class="px-6 py-4 whitespace-nowrap">
+{% if log.action_type == 'ban_user' %}
+<span class="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-500/20">Ban</span>
+{% elif log.action_type == 'unban_user' %}
+<span class="bg-green-500/10 text-green-400 px-2 py-1 rounded text-xs font-bold border border-green-500/20">Unban</span>
+{% elif log.action_type == 'delete_user' %}
+<span class="bg-red-800/20 text-red-300 px-2 py-1 rounded text-xs font-bold border border-red-800/30">Delete User</span>
+{% elif log.action_type == 'promote_admin' %}
+<span class="bg-purple-500/10 text-purple-400 px-2 py-1 rounded text-xs font-bold border border-purple-500/20">Promote</span>
+{% elif log.action_type == 'demote_admin' %}
+<span class="bg-orange-500/10 text-orange-400 px-2 py-1 rounded text-xs font-bold border border-orange-500/20">Demote</span>
+{% elif log.action_type == 'hide_review' %}
+<span class="bg-yellow-500/10 text-yellow-400 px-2 py-1 rounded text-xs font-bold border border-yellow-500/20">Hide Review</span>
+{% elif log.action_type == 'delete_review' %}
+<span class="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-500/20">Delete Review</span>
+{% elif log.action_type == 'resolve_report' %}
+<span class="bg-blue-500/10 text-blue-400 px-2 py-1 rounded text-xs font-bold border border-blue-500/20">Dismiss Report</span>
+{% elif log.action_type == 'delete_game' %}
+<span class="bg-slate-500/10 text-slate-400 px-2 py-1 rounded text-xs font-bold border border-slate-500/20">Delete Game</span>
+{% else %}
+<span class="bg-white/5 text-white px-2 py-1 rounded text-xs font-mono border border-white/10">{{ log.action_type }}</span>
+{% endif %}
+</td>
+<td class="px-6 py-4 text-slate-300 max-w-md">
+{% if log.details %}
+<span class="leading-relaxed">{{ log.details }}</span>
+{% else %}
+<span class="text-text-muted italic">—</span>
+{% endif %}
+</td>
+<td class="px-6 py-4 text-right text-text-muted text-xs whitespace-nowrap">{{ log.created_at | timeAgo }}</td>
+</tr>
+{% else %}
+<tr><td colspan="4" class="px-6 py-8 text-center text-text-muted">No logs recorded yet.</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+{% endif %}
+
+</div>
+</div>
+{% endblock %}

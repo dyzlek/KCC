@@ -1,0 +1,320 @@
+{% extends "layout.njk" %}
+
+{% block content %}
+
+{% if isHome %}
+    <!-- LANDING PAGE LAYOUT -->
+
+    <!-- HERO SECTION -->
+    {% if heroGame %}
+    <div class="relative w-full h-[500px] rounded-2xl overflow-hidden mb-12 group">
+        <div class="absolute inset-0">
+             {% if heroGame.screenshots and heroGame.screenshots.length > 0 %}
+                <img src="{{ heroGame.screenshots[0].urlHD }}" alt="{{ heroGame.name }}" class="w-full h-full object-cover">
+            {% elif heroGame.coverUrlHD %}
+                <img src="{{ heroGame.coverUrlHD }}" alt="{{ heroGame.name }}" class="w-full h-full object-cover">
+            {% else %}
+                <div class="w-full h-full bg-gradient-to-br from-purple-900 to-indigo-900"></div>
+            {% endif %}
+            <div class="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/50 to-transparent"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-dark-bg/90 via-transparent to-transparent"></div>
+        </div>
+
+        <div class="absolute bottom-0 left-0 p-8 md:p-12 w-full md:w-2/3">
+            <div class="bg-primary/20 text-primary border border-primary/20 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest inline-block mb-4 backdrop-blur-md">
+                Featured Game
+            </div>
+            <h1 class="text-4xl md:text-6xl font-black text-white mb-4 leading-tight drop-shadow-xl">{{ heroGame.name }}</h1>
+            <p class="text-slate-300 text-lg mb-8 line-clamp-2 md:line-clamp-3 leading-relaxed drop-shadow-md max-w-2xl">
+                {{ heroGame.summary }}
+            </p>
+            <div class="flex items-center gap-4">
+                <a href="/game/{{ heroGame.slug or heroGame.id }}" class="bg-white text-black hover:bg-zinc-200 px-8 py-3.5 rounded-xl font-black text-sm uppercase tracking-wide transition-all shadow-xl shadow-black/20 flex items-center gap-2">
+                    View Details <span class="material-icons text-base">arrow_forward</span>
+                </a>
+                <div class="flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-3 rounded-xl border border-white/10">
+                    <span class="material-icons text-yellow-500">star</span>
+                    <span class="font-black text-white text-lg">{{ (heroGame.rating / 10) | round(1) }}</span>
+                    <span class="text-xs text-zinc-400 font-bold uppercase top-0.5 relative">/ 10</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- INTRO TEXT -->
+    <div class="mb-16 max-w-3xl">
+        <h2 class="text-3xl font-black text-white mb-4 flex items-center gap-3">
+            Welcome to <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-500">KC Catalogue</span>
+        </h2>
+        <p class="text-slate-400 text-lg leading-relaxed">
+            Discover, track, and review your favorite video games. From the latest blockbusters to hidden indie gems, 
+            explore our extensive database powered by IGDB. Join the community, share your thoughts, and build your ultimate collection.
+        </p>
+    </div>
+
+    <!-- SECTION: BEST OF 2025 -->
+    <div class="mb-16">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-black text-white mb-1">Best of 2025</h2>
+                <p class="text-text-muted text-sm">The highest rated games from last year</p>
+            </div>
+            <a href="/?tab=popular-2025" class="text-primary hover:text-white font-bold text-sm flex items-center gap-1 transition-colors">
+                View all <span class="material-icons text-base">chevron_right</span>
+            </a>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {% for game in games2025 %}
+                {% if loop.index <= 4 %}
+                <a href="/game/{{ game.slug or game.id }}" class="group block relative">
+                    <div class="aspect-[3/4] rounded-xl overflow-hidden bg-card-bg relative shadow-lg shadow-black/40 group-hover:-translate-y-2 transition-transform duration-300">
+                        <img src="{{ game.coverUrlHD }}" alt="{{ game.name }}" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                        
+                        <div class="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg text-xs font-black text-warning flex items-center gap-1 border border-white/10">
+                            <span class="material-icons text-[10px]">star</span> {{ (game.rating / 10) | round(1) }}
+                        </div>
+                        
+                        <div class="absolute bottom-0 left-0 w-full p-4">
+                            <h3 class="text-white font-bold text-lg leading-tight group-hover:text-primary transition-colors line-clamp-2">{{ game.name }}</h3>
+                            <div class="flex flex-wrap gap-1 mt-2">
+                                {% for genre in game.genres %}
+                                    {% if loop.index <= 2 %}
+                                        <span class="text-[10px] bg-white/10 px-2 py-0.5 rounded text-zinc-300">{{ genre.name }}</span>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- SECTION: TRENDING 2026 -->
+    <div class="mb-12">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-black text-white mb-1">Trending in 2026</h2>
+                <p class="text-text-muted text-sm">What everyone is playing right now</p>
+            </div>
+            <a href="/?tab=new" class="text-primary hover:text-white font-bold text-sm flex items-center gap-1 transition-colors">
+                View all <span class="material-icons text-base">chevron_right</span>
+            </a>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+            {% for game in games2026 %}
+                {% if loop.index <= 4 %}
+                <a href="/game/{{ game.slug or game.id }}" class="group block relative">
+                    <div class="aspect-[16/9] rounded-xl overflow-hidden bg-card-bg relative shadow-lg shadow-black/40 group-hover:ring-2 ring-primary transition-all">
+                        <img src="{{ game.coverUrlHD }}" alt="{{ game.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
+                        
+                        <div class="absolute bottom-0 left-0 w-full p-4">
+                            <h3 class="text-white font-bold text-base truncate group-hover:text-primary transition-colors">{{ game.name }}</h3>
+                            <div class="text-xs text-text-muted mt-1">{{ game.releaseDateFormatted }}</div>
+                        </div>
+                    </div>
+                </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+
+{% else %}
+    <!-- STANDARD GRID LAYOUT (FILTERED VIEW) -->
+
+    <!-- STANDARD GRID LAYOUT (FILTERED VIEW) -->
+
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-4xl md:text-6xl font-black text-white tracking-tight mb-2 uppercase">{{ pageTitle or 'Most Popular' }}</h1>
+        <p class="text-text-muted text-lg">{{ pageSubtitle or '' }}</p>
+    </div>
+
+    <!-- Filters Toolbar -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-8 sticky top-[72px] z-40 py-3 bg-dark-bg/95 backdrop-blur-sm -mx-4 px-4 lg:-mx-10 lg:px-10">
+        <div class="relative group">
+            <button class="flex items-center justify-between gap-3 bg-card-bg hover:bg-hover-bg text-white px-4 py-2.5 rounded-lg min-w-[200px] transition-colors font-medium text-sm">
+                <span class="text-text-muted mr-1">Order by:</span>
+                <span>
+                    {% if tab == 'new' %}Release Date
+                    {% elif tab == 'rating' %}User Rating
+                    {% elif tab == 'critics-score' %}Critics Score
+                    {% elif tab == 'name-asc' %}Name (A-Z)
+                    {% elif tab == 'date-old' %}Oldest
+                    {% elif tab == 'date-new' %}Newest
+                    {% elif tab == 'popular-2025' %}Popular 2025
+                    {% else %}Popularity{% endif %}
+                </span>
+                <span class="material-icons ml-auto text-text-muted text-lg">expand_more</span>
+            </button>
+            <div class="absolute top-full left-0 w-full pt-2 hidden group-hover:block z-50">
+                <div class="bg-card-bg rounded-lg shadow-xl border border-white/5 p-1">
+                    <a href="/?tab=popular{% if activeGenres.length %}&genres={{ activeGenres|join(',') }}{% endif %}{% if activePlatforms.length %}&platforms={{ activePlatforms|join(',') }}{% endif %}" class="block px-3 py-2 text-sm text-white hover:bg-white/10 rounded {% if tab == 'popular' %}bg-white/10 font-bold{% endif %}">Popularity</a>
+                    <a href="/?tab=new{% if activeGenres.length %}&genres={{ activeGenres|join(',') }}{% endif %}{% if activePlatforms.length %}&platforms={{ activePlatforms|join(',') }}{% endif %}" class="block px-3 py-2 text-sm text-white hover:bg-white/10 rounded {% if tab == 'new' %}bg-white/10 font-bold{% endif %}">Release Date</a>
+                    <a href="/?tab=popular-2025{% if activeGenres.length %}&genres={{ activeGenres|join(',') }}{% endif %}{% if activePlatforms.length %}&platforms={{ activePlatforms|join(',') }}{% endif %}" class="block px-3 py-2 text-sm text-white hover:bg-white/10 rounded {% if tab == 'popular-2025' %}bg-white/10 font-bold{% endif %}">Popular 2025</a>
+                    <a href="/?tab=rating{% if activeGenres.length %}&genres={{ activeGenres|join(',') }}{% endif %}{% if activePlatforms.length %}&platforms={{ activePlatforms|join(',') }}{% endif %}" class="block px-3 py-2 text-sm text-white hover:bg-white/10 rounded {% if tab == 'rating' %}bg-white/10 font-bold{% endif %}">User Rating</a>
+                    <a href="/?tab=critics-score{% if activeGenres.length %}&genres={{ activeGenres|join(',') }}{% endif %}{% if activePlatforms.length %}&platforms={{ activePlatforms|join(',') }}{% endif %}" class="block px-3 py-2 text-sm text-white hover:bg-white/10 rounded {% if tab == 'critics-score' %}bg-white/10 font-bold{% endif %}">Critics Score</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Filters Display -->
+        {% if activeGenres.length > 0 or activePlatforms.length > 0 %}
+            <div class="flex flex-wrap items-center gap-2">
+                {% for g in allGenres %}
+                    {% if g.id in activeGenres %}
+                        <a href="/?genres={% set newG = [] %}{% for id in activeGenres %}{% if id != g.id %}{% set _ = newG.push(id) %}{% endif %}{% endfor %}{{ newG|join(',') }}&platforms={{ activePlatforms|join(',') }}&tab={{ tab }}" 
+                           class="flex items-center gap-1 bg-primary text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-red-500 transition-colors" title="Remove {{ g.name }}">
+                            {{ g.name }} <span class="material-icons text-[14px]">close</span>
+                        </a>
+                    {% endif %}
+                {% endfor %}
+                {% for p in allPlatforms %}
+                    {% if p.id in activePlatforms %}
+                        <a href="/?genres={{ activeGenres|join(',') }}&platforms={% set newP = [] %}{% for id in activePlatforms %}{% if id != p.id %}{% set _ = newP.push(id) %}{% endif %}{% endfor %}{{ newP|join(',') }}&tab={{ tab }}" 
+                           class="flex items-center gap-1 bg-primary text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-red-500 transition-colors" title="Remove {{ p.name }}">
+                            {{ p.name }} <span class="material-icons text-[14px]">close</span>
+                        </a>
+                    {% endif %}
+                {% endfor %}
+                <a href="/?tab={{ tab }}" class="text-text-muted hover:text-white text-xs font-bold px-2">Clear All</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Error -->
+    {% if error %}
+        <div class="bg-red-500/10 border border-red-500/30 text-red-500 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+            <span class="material-icons">error</span>
+            {{ error }}
+        </div>
+    {% endif %}
+
+    <!-- GAME GRID -->
+    {% if games and games.length > 0 %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 gap-6">
+            {% for game in games %}
+                <div class="group bg-card-bg rounded-2xl overflow-hidden card-hover-effect relative">
+                    <!-- Image -->
+                    <a href="/game/{{ game.slug or game.id }}" class="block aspect-[3/2] bg-gray-800 relative overflow-hidden">
+                        {% if game.coverUrlHD %}
+                            <img src="{{ game.coverUrlHD }}" alt="{{ game.name }}"
+                                 class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        {% else %}
+                            <div class="absolute inset-0 bg-gradient-to-br from-purple-900 to-indigo-900 flex items-center justify-center">
+                                <span class="material-icons text-5xl text-white/20">image</span>
+                            </div>
+                        {% endif %}
+
+                        <!-- Critics Score Badge (top-right) -->
+                        {% if game.aggregated_rating %}
+                            {% set meta = (game.aggregated_rating / 10) | round(1) %}
+                            <div class="absolute top-3 right-3 score-badge px-2 py-1 rounded-lg text-xs font-black border-2 backdrop-blur-sm
+                                {% if meta >= 7.5 %}bg-green-500/20 border-green-500 text-green-400
+                                {% elif meta >= 5 %}bg-yellow-500/20 border-yellow-500 text-yellow-400
+                                {% else %}bg-red-500/20 border-red-500 text-red-400{% endif %}">
+                                {{ meta }}
+                            </div>
+                        {% elif game.rating %}
+                            {% set score = (game.rating / 10) | round(1) %}
+                            <div class="absolute top-3 right-3 score-badge px-2 py-1 rounded-lg text-xs font-black border-2 backdrop-blur-sm bg-white/10 border-white/20 text-white/70">
+                                {{ score }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Year Badge (top-left) -->
+                        {% if game.releaseYear %}
+                            <div class="absolute top-3 left-3 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-xs font-bold text-white">
+                                {{ game.releaseYear }}
+                            </div>
+                        {% endif %}
+                    </a>
+
+                    <div class="p-4">
+                        <!-- Platform icons -->
+                        <div class="flex gap-1.5 text-text-muted mb-2">
+                            {% if game.platforms %}
+                                {% set shown = [] %}
+                                {% for platform in game.platforms %}
+                                    {% if 'PC' in platform.name or 'Windows' in platform.name %}
+                                        {% if 'pc' not in shown %}
+                                            <span class="material-icons text-sm" title="PC">desktop_windows</span>
+                                            {% set _ = shown.push('pc') %}
+                                        {% endif %}
+                                    {% elif 'PlayStation' in platform.name %}
+                                        {% if 'ps' not in shown %}
+                                            <span class="material-icons text-sm" title="PlayStation">gamepad</span>
+                                            {% set _ = shown.push('ps') %}
+                                        {% endif %}
+                                    {% elif 'Xbox' in platform.name %}
+                                        {% if 'xbox' not in shown %}
+                                            <span class="material-icons text-sm" title="Xbox">videogame_asset</span>
+                                            {% set _ = shown.push('xbox') %}
+                                        {% endif %}
+                                    {% elif 'Nintendo' in platform.name %}
+                                        {% if 'nin' not in shown %}
+                                            <span class="material-icons text-sm" title="Nintendo">sports_esports</span>
+                                            {% set _ = shown.push('nin') %}
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <!-- Title -->
+                        <h3 class="text-lg font-bold text-white leading-snug mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                            <a href="/game/{{ game.slug or game.id }}">{{ game.name }}</a>
+                        </h3>
+
+                        <!-- Genre Chips -->
+                        {% if game.genres and game.genres.length > 0 %}
+                            <div class="flex flex-wrap gap-1.5">
+                                {% for genre in game.genres %}
+                                    {% if loop.index <= 3 and genre.id %}
+                                        <a href="/genre/{{ genre.id }}" class="text-xs bg-white/5 hover:bg-white/10 text-text-muted hover:text-white px-2 py-0.5 rounded-full transition-colors">{{ genre.name }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        <div class="py-12 flex justify-center gap-3">
+            {% if page > 1 %}
+                {% set prevUrl %}{% if tab == 'search' %}/search?q={{ searchQuery }}&page={{ page - 1 }}{% elif tab == 'genre' %}/genre/{{ genreId }}?page={{ page - 1 }}{% elif tab == 'platform' %}/platform/{{ platformId }}?page={{ page - 1 }}{% else %}/?tab={{ tab }}&page={{ page - 1 }}{% endif %}{% endset %}
+                <a href="{{ prevUrl }}"
+                   class="bg-card-bg hover:bg-hover-bg text-white px-5 py-2.5 rounded-lg font-bold transition-colors text-sm">
+                    ← Previous
+                </a>
+            {% endif %}
+            <span class="bg-primary text-white px-5 py-2.5 rounded-lg font-bold text-sm">Page {{ page }}</span>
+            {% if hasMore %}
+                {% set nextUrl %}{% if tab == 'search' %}/search?q={{ searchQuery }}&page={{ page + 1 }}{% elif tab == 'genre' %}/genre/{{ genreId }}?page={{ page + 1 }}{% elif tab == 'platform' %}/platform/{{ platformId }}?page={{ page + 1 }}{% else %}/?tab={{ tab }}&page={{ page + 1 }}{% endif %}{% endset %}
+                <a href="{{ nextUrl }}"
+                   class="bg-card-bg hover:bg-hover-bg text-white px-5 py-2.5 rounded-lg font-bold transition-colors text-sm">
+                    Next →
+                </a>
+            {% endif %}
+        </div>
+
+    {% else %}
+        <div class="py-20 text-center">
+            <span class="material-icons text-6xl text-white/20 mb-4 block">sports_esports</span>
+            <h3 class="text-2xl font-bold text-white mb-2">No games found</h3>
+            <p class="text-text-muted">{% if tab == 'search' %}Try different keywords.{% else %}Unable to load games right now.{% endif %}</p>
+        </div>
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

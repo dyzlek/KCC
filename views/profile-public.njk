@@ -1,0 +1,343 @@
+{% extends "layout.njk" %}
+
+{% block mainClass %}relative{% endblock %}
+
+{% block content %}
+
+<!-- PROFILE HEADER -->
+<div class="relative h-[250px] w-full">
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-900 to-purple-900">
+        {% if profileUser.banner_url %}
+            <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('{{ profileUser.banner_url }}')"></div>
+            <div class="absolute inset-0 bg-black/40"></div>
+        {% else %}
+            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30"></div>
+        {% endif %}
+    </div>
+    <div class="absolute inset-0 profile-banner-gradient"></div>
+
+    <div class="absolute bottom-0 left-0 w-full px-4 lg:px-10 translate-y-1/2 pointer-events-none">
+        <div class="w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-dark-bg bg-card-bg overflow-hidden relative group shadow-2xl pointer-events-auto">
+            {% if profileUser.avatar_url %}
+                <img src="{{ profileUser.avatar_url }}" alt="{{ profileUser.username }}" class="w-full h-full object-cover">
+            {% else %}
+                <div class="w-full h-full bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-4xl font-bold text-white">
+                    {{ profileUser.username[0] | upper }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- PROFILE META & ACTIONS -->
+<div class="pt-20 md:pt-4 pb-6 px-4 lg:px-10 w-full">
+    <div class="flex flex-col md:flex-row md:items-end gap-6 md:pl-[220px]"> <!-- Clear avatar width (144px + margins) -->
+        
+        <!-- User Info -->
+        <div class="flex-1 text-center md:text-left">
+            <h1 class="text-4xl font-black text-white mb-1 leading-none drop-shadow-lg">{{ profileUser.username }}</h1>
+            <p class="text-text-muted text-sm font-medium flex items-center justify-center md:justify-start gap-2">
+                <span class="material-icons text-base">calendar_today</span>
+                Member since {{ profileUser.created_at | dateFormat }}
+            </p>
+            <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-2">
+                {% if profileUser.location %}
+                    <p class="text-text-muted text-xs flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-full border border-white/5">
+                        <span class="material-icons text-sm">location_on</span>
+                        {{ profileUser.location }}
+                    </p>
+                {% endif %}
+                {% if profileUser.age %}
+                    <p class="text-text-muted text-xs flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-full border border-white/5">
+                        <span class="material-icons text-sm">cake</span>
+                        {{ profileUser.age }} years old
+                    </p>
+                {% endif %}
+                {% if profileUser.gender %}
+                    <p class="text-text-muted text-xs flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-full border border-white/5 capitalize">
+                        <span class="material-icons text-sm">person</span>
+                        {{ profileUser.gender }}
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-center md:justify-end">
+            {% if user and not isOwnProfile %}
+                <div class="flex items-center gap-3">
+                    <!-- Follow Button -->
+                    <button id="follow-btn" onclick="toggleFollow({{ profileUser.id }})" 
+                        class="{% if isFollowing %}bg-card-bg hover:bg-red-500/10 text-white border border-white/10{% else %}bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20{% endif %} px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 group">
+                        {% if isFollowing %}
+                            <span class="material-icons text-purple-400 group-hover:text-red-400">person_remove</span>
+                            <span class="group-hover:hidden">Following</span>
+                            <span class="hidden group-hover:inline text-red-400">Unfollow</span>
+                        {% else %}
+                            <span class="material-icons">person_add_alt</span> Follow
+                        {% endif %}
+                    </button>
+                    {% if wishlistPublic %}
+                        <a href="/profile/{{ profileUser.id }}/wishlist" class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-primary/20">
+                            <span class="material-icons">star</span> Wishlist
+                        </a>
+                    {% endif %}
+                    {% if profileUser.steam_url %}
+                        <a href="{{ profileUser.steam_url }}" target="_blank" class="bg-[#171a21] hover:bg-[#2a475e] text-white px-4 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-black/20" title="View Steam Profile">
+                            <img src="https://community.akamai.steamstatic.com/public/shared/images/header/logo_steam.svg?t=962016" alt="Steam" class="h-4">
+                            Steam
+                        </a>
+                    {% endif %}
+                </div>
+            {% elif isOwnProfile %}
+                <a href="/profile" class="bg-card-bg hover:bg-white/10 text-white border border-white/10 px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
+                    <span class="material-icons">edit</span> Edit Profile
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- PROFILE CONTENT -->
+<div class="px-4 lg:px-10 pb-12 w-full max-w-7xl mx-auto">
+    
+    <!-- KEY METRICS ROW -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <div class="bg-card-bg p-6 rounded-3xl border border-white/5 text-center group hover:border-primary/30 transition-all shadow-xl">
+            <div class="text-3xl font-black text-white leading-tight mb-1">{{ stats.total_games }}</div>
+            <div class="text-[10px] text-text-muted uppercase font-black tracking-widest">Entries</div>
+        </div>
+        <div class="bg-card-bg p-6 rounded-3xl border border-white/5 text-center group hover:border-primary/30 transition-all shadow-xl">
+            <div class="text-3xl font-black text-primary leading-tight mb-1">{{ stats.mean_score }}</div>
+            <div class="text-[10px] text-text-muted uppercase font-black tracking-widest">Score Avg</div>
+        </div>
+        <div class="bg-card-bg p-6 rounded-3xl border border-indigo-500/20 text-center group hover:border-indigo-500/40 transition-all shadow-xl relative overflow-hidden">
+            <div class="absolute -right-2 -top-2 w-12 h-12 bg-indigo-500/5 rounded-full blur-xl"></div>
+            <div class="text-3xl font-black text-indigo-400 leading-tight mb-1">#{{ stats.higher_lower_best }}</div>
+            <div class="text-[10px] text-indigo-400/60 uppercase font-black tracking-widest">HL Best</div>
+        </div>
+        <div class="bg-card-bg p-6 rounded-3xl border border-white/5 text-center group hover:border-primary/30 transition-all shadow-xl">
+            <div class="text-3xl font-black text-white leading-tight mb-1">{{ followCounts.followers }}</div>
+            <div class="text-[10px] text-text-muted uppercase font-black tracking-widest">Followers</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+
+        <!-- LEFT COLUMN: MAIN CONTENT (SPLIT INTO 2) -->
+        <div class="lg:col-span-8 space-y-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                
+                <!-- Distribution Column -->
+                <div class="bg-[#111] p-8 rounded-3xl border border-white/5 shadow-2xl relative overflow-hidden h-full">
+                    <div class="absolute right-0 top-0 opacity-[0.02] pointer-events-none">
+                        <span class="material-icons text-9xl -translate-y-5 translate-x-5">pie_chart</span>
+                    </div>
+                    
+                    <h3 class="text-[10px] font-black text-white/50 uppercase tracking-[0.3em] mb-8 flex items-center gap-2">
+                        <span class="material-icons text-primary text-sm">bar_chart</span> Status
+                    </h3>
+
+                    <div class="space-y-5 relative">
+                        <!-- Playing -->
+                        <div class="group">
+                            <div class="flex justify-between items-end mb-1.5">
+                                <span class="text-xs font-bold text-green-400">Playing</span>
+                                <span class="text-xs font-black text-white">{{ stats.status_counts.playing }}</span>
+                            </div>
+                            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]" style="width: {{ (stats.status_counts.playing / stats.total_games * 100) if stats.total_games > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        <!-- Completed -->
+                        <div class="group">
+                            <div class="flex justify-between items-end mb-1.5">
+                                <span class="text-xs font-bold text-blue-400">Completed</span>
+                                <span class="text-xs font-black text-white">{{ stats.status_counts.completed }}</span>
+                            </div>
+                            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]" style="width: {{ (stats.status_counts.completed / stats.total_games * 100) if stats.total_games > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        <!-- Plan to Play -->
+                        <div class="group">
+                            <div class="flex justify-between items-end mb-1.5">
+                                <span class="text-xs font-bold text-gray-400">Planning</span>
+                                <span class="text-xs font-black text-white">{{ stats.status_counts.plan_to_play }}</span>
+                            </div>
+                            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-gray-500" style="width: {{ (stats.status_counts.plan_to_play / stats.total_games * 100) if stats.total_games > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        <!-- On Hold -->
+                        <div class="group">
+                            <div class="flex justify-between items-end mb-1.5">
+                                <span class="text-xs font-bold text-yellow-400">On Hold</span>
+                                <span class="text-xs font-black text-white">{{ stats.status_counts.on_hold }}</span>
+                            </div>
+                            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-yellow-500" style="width: {{ (stats.status_counts.on_hold / stats.total_games * 100) if stats.total_games > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                        <!-- Dropped -->
+                        <div class="group">
+                            <div class="flex justify-between items-end mb-1.5">
+                                <span class="text-xs font-bold text-red-400">Dropped</span>
+                                <span class="text-xs font-black text-white">{{ stats.status_counts.dropped }}</span>
+                            </div>
+                            <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-red-500" style="width: {{ (stats.status_counts.dropped / stats.total_games * 100) if stats.total_games > 0 else 0 }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-white/5 flex gap-2">
+                         <a href="/profile/{{ profileUser.id }}/collection" class="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-[9px] font-black text-center text-white transition-all uppercase tracking-widest">Collection</a>
+                         {% if wishlistPublic %}
+                            <a href="/profile/{{ profileUser.id }}/wishlist" class="flex-1 py-3 bg-primary/10 hover:bg-primary/20 rounded-xl text-[9px] font-black text-center text-primary transition-all uppercase tracking-widest">Wishlist</a>
+                         {% endif %}
+                    </div>
+                </div>
+
+                <!-- Reviews Column -->
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-[10px] font-black text-white/50 uppercase tracking-[0.3em] flex items-center gap-2">
+                            <span class="material-icons text-primary text-sm">rate_review</span> Reviews
+                        </h3>
+                        <a href="/profile/{{ profileUser.id }}/reviews" class="text-[9px] font-black text-primary hover:text-white transition-colors uppercase tracking-widest underline decoration-primary/20 underline-offset-4">View All</a>
+                    </div>
+
+                    {% if reviews and reviews.length > 0 %}
+                        <div class="space-y-4">
+                            {% for review in reviews | batch(2) | first %}
+                            <div class="bg-[#111] p-5 rounded-2xl border border-white/5 group hover:border-white/10 transition-all shadow-lg">
+                                <div class="flex items-start gap-4 mb-3">
+                                    <div class="w-10 h-14 bg-gray-800 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
+                                        {% if review.game_cover %}
+                                            <img src="{{ review.game_cover }}" alt="{{ review.game_name }}" class="w-full h-full object-cover">
+                                        {% endif %}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="font-bold text-white text-[13px] truncate leading-tight mb-0.5">{{ review.game_name }}</div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex items-center text-primary text-[10px] font-black">
+                                                <span class="material-icons text-[10px] mr-1">star</span>{{ review.score }}
+                                            </div>
+                                            <div class="text-[9px] text-text-muted font-bold truncate">{{ review.created_at | timeAgo }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-slate-400 text-xs leading-relaxed line-clamp-3">{{ review.content }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="py-12 text-center bg-[#111] rounded-2xl border border-white/5 border-dashed">
+                            <span class="material-icons text-3xl text-white/5 mb-2">rate_review</span>
+                            <p class="text-text-muted text-[10px] font-medium tracking-wide">No reviews yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: SIDEBAR -->
+        <div class="lg:col-span-4 space-y-6">
+            <!-- About Card -->
+            <div class="bg-[#111] rounded-2xl border border-white/5 p-6 shadow-xl">
+                <h3 class="text-xs font-black text-white mb-4 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <span class="material-icons text-primary text-sm">person</span> About
+                </h3>
+                <p class="text-slate-400 text-sm leading-relaxed italic">
+                    {{ profileUser.bio or "This user hasn't written a bio yet." }}
+                </p>
+            </div>
+
+            <!-- Follow Info Card -->
+            <div class="bg-[#111] rounded-2xl border border-white/5 p-6 shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xs font-black text-white uppercase tracking-[0.2em]">Social</h3>
+                    <span class="material-icons text-white/5">groups</span>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="text-center flex-1 py-2 bg-white/[0.02] rounded-xl">
+                        <div class="text-xl font-black text-white">{{ followCounts.followers }}</div>
+                        <div class="text-[9px] text-text-muted uppercase font-bold tracking-tighter">Followers</div>
+                    </div>
+                    <a href="/profile/{{ profileUser.id }}/following" class="text-center flex-1 py-2 bg-white/[0.02] rounded-xl hover:bg-white/5 transition-colors">
+                        <div class="text-xl font-black text-white">{{ followCounts.following }}</div>
+                        <div class="text-[9px] text-text-muted uppercase font-bold tracking-tighter">Following</div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Badges Section -->
+            {% if badges and badges.length > 0 %}
+            <div class="bg-[#111] rounded-2xl border border-white/5 p-6 shadow-xl space-y-4">
+                <h3 class="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+                    <span class="material-icons text-yellow-500 text-sm">workspace_premium</span> Badges
+                </h3>
+                <div class="grid grid-cols-4 gap-3">
+                    {% for badge in badges %}
+                    <div class="group relative flex items-center justify-center aspect-square bg-white/5 rounded-xl hover:bg-white/10 border border-white/5 hover:border-primary/30 transition-all cursor-help" 
+                         title="{{ badge.description }}">
+                        <span class="material-icons {{ badge.color }} text-xl group-hover:scale-110 transition-transform">{{ badge.icon }}</span>
+                        
+                        <!-- Tooltip (Custom) -->
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 bg-black text-[10px] text-white p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-white/10 text-center shadow-2xl">
+                            <div class="font-bold mb-0.5 {{ badge.color }}">{{ badge.name }}</div>
+                            {{ badge.description }}
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-black"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Steam Stats uplift -->
+            {% if steamStats %}
+            <div class="bg-[#111] rounded-2xl border border-white/5 p-6 shadow-xl space-y-4">
+                <div class="flex items-center justify-between text-[#66c0f4]">
+                    <div class="flex items-center gap-2">
+                        <img src="https://community.akamai.steamstatic.com/public/shared/images/header/logo_steam.svg?t=962016" alt="Steam" class="h-3 opacity-80">
+                        <span class="text-[10px] font-black uppercase tracking-widest">Steam Activity</span>
+                    </div>
+                    <span class="material-icons text-sm opacity-50">videogame_asset</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-[#66c0f4]/5 p-3 rounded-xl border border-[#66c0f4]/10">
+                        <div class="text-lg font-black text-white leading-none mb-1">{{ steamStats.total }}h</div>
+                        <div class="text-[9px] text-[#66c0f4]/60 uppercase font-bold tracking-wider">Total</div>
+                    </div>
+                    <div class="bg-[#66c0f4]/5 p-3 rounded-xl border border-[#66c0f4]/10">
+                        <div class="text-lg font-black text-[#66c0f4] leading-none mb-1">{{ steamStats.recent }}h</div>
+                        <div class="text-[9px] text-[#66c0f4]/60 uppercase font-bold tracking-wider">2 Weeks</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+async function toggleFollow(userId) {
+    try {
+        const res = await fetch('/follow/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetUserId: userId })
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.reload();
+        }
+    } catch (err) {
+        console.error('Error toggling follow:', err);
+    }
+}
+</script>
+
+{% endblock %}

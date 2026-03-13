@@ -1,0 +1,152 @@
+{% extends "layout.njk" %}
+
+{% block mainClass %}relative{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<div class="relative h-[120px] w-full overflow-hidden">
+    <!-- Background Image/Video could go here -->
+    <div class="absolute inset-0 bg-gradient-to-r from-blue-900 via-purple-900 to-black">
+        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
+    </div>
+    
+    <div class="absolute inset-0 flex items-center justify-center">
+        <div class="text-center">
+            <h1 class="text-4xl font-black text-white mb-1 tracking-tighter drop-shadow-lg">
+                RELEASE <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">CALENDAR</span>
+            </h1>
+            <p class="text-sm text-text-muted font-light">Upcoming Games & Expansions</p>
+        </div>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 lg:px-10 pt-6 pb-12">
+
+    <!-- Filters -->
+    <div class="mb-8 bg-card-bg border border-white/10 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                <span class="material-icons text-primary">filter_alt</span>
+                Filter
+            </h2>
+            <form action="/calendar" method="GET" class="flex items-center gap-2">
+                
+                <!-- Month Select -->
+                <div class="relative">
+                    <select name="month_val" id="monthSelect" class="bg-dark-bg border border-white/10 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 pr-8 appearance-none cursor-pointer">
+                        {% for i in range(1, 13) %}
+                        <option value="{{ i }}" {% if selectedMonth == i %}selected{% endif %}>
+                           {% if i == 1 %}Janvier{% elif i == 2 %}Février{% elif i == 3 %}Mars{% elif i == 4 %}Avril{% elif i == 5 %}Mai{% elif i == 6 %}Juin{% elif i == 7 %}Juillet{% elif i == 8 %}Août{% elif i == 9 %}Septembre{% elif i == 10 %}Octobre{% elif i == 11 %}Novembre{% elif i == 12 %}Décembre{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <span class="material-icons text-white/50 text-sm">expand_more</span>
+                    </div>
+                </div>
+
+                <!-- Year Select -->
+                <div class="relative">
+                    <select name="year_val" id="yearSelect" class="bg-dark-bg border border-white/10 text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 pr-8 appearance-none cursor-pointer">
+                        {% for y in range(currentYear or 2026, 2031) %}
+                        <option value="{{ y }}" {% if selectedYear == y %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                     <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                        <span class="material-icons text-white/50 text-sm">expand_more</span>
+                    </div>
+                </div>
+
+                <button type="button" id="applyFilter" class="bg-primary hover:bg-primary-dark text-white font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center transition-colors">
+                    Go
+                </button>
+            </form>
+        </div>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const monthSelect = document.getElementById('monthSelect');
+                const yearSelect = document.getElementById('yearSelect');
+                const applyBtn = document.getElementById('applyFilter');
+
+                function goToDate() {
+                    const m = monthSelect.value.toString().padStart(2, '0');
+                    const y = yearSelect.value;
+                    window.location.href = `/calendar?month=${y}-${m}`;
+                }
+
+                applyBtn.addEventListener('click', goToDate);
+            });
+        </script>
+    </div>
+    
+    {% if calendarData and calendarData.length > 0 %}
+        <div class="space-y-16">
+            {% for group in calendarData %}
+            <div class="relative">
+                <!-- Month Header -->
+                <div class="sticky top-[72px] z-10 bg-dark-bg/95 backdrop-blur py-4 border-b border-white/10 mb-6 flex items-center justify-between">
+                    <h2 class="text-2xl font-black text-white uppercase tracking-widest flex items-center gap-4">
+                        <span class="text-primary material-icons">calendar_month</span>
+                        {{ group.month }}
+                    </h2>
+                    
+                    <div class="flex items-center gap-2">
+                        <a href="/calendar?month={{ group.prevMonthParam }}" class="p-2 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors" title="Previous month">
+                            <span class="material-icons">chevron_left</span>
+                        </a>
+                        <a href="/calendar?month={{ group.nextMonthParam }}" class="p-2 hover:bg-white/10 rounded-lg text-white/50 hover:text-white transition-colors" title="Next month">
+                            <span class="material-icons">chevron_right</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Games Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    {% for game in group.games %}
+                    <a href="/game/{{ game.slug }}" class="group block bg-card-bg rounded-xl overflow-hidden border border-white/5 hover:border-primary/50 transition-all hover:-translate-y-1 shadow-lg hover:shadow-primary/20">
+                        <!-- Cover -->
+                        <div class="aspect-[3/4] overflow-hidden relative">
+                            {% if game.coverUrl %}
+                            <img src="{{ game.coverUrl }}" alt="{{ game.name }}" class="w-full h-full object-cover transition-transform group-hover:scale-105">
+                            {% else %}
+                            <div class="w-full h-full bg-gray-800 flex items-center justify-center">
+                                <span class="text-white/20 font-bold">No Cover</span>
+                            </div>
+                            {% endif %}
+
+                            <!-- Release Date Badge -->
+                            <div class="absolute top-2 right-2 bg-black/80 backdrop-blur text-white text-xs font-bold px-2 py-1 rounded border border-white/10">
+                                {{ game.releaseDateFormatted }}
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="p-4">
+                            <h3 class="font-bold text-white leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5em]">{{ game.name }}</h3>
+                            <div class="flex items-center gap-2 text-xs text-text-muted">
+                                <span class="truncate">
+                                    {% for p in game.platforms %}
+                                        {{ p.name }}{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="py-20 text-center">
+            <span class="material-icons text-6xl text-white/10 mb-4 block">event_busy</span>
+            <h2 class="text-2xl font-bold text-white mb-2">No upcoming releases found</h2>
+            <p class="text-text-muted">Check back later or try refreshing the data.</p>
+        </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
