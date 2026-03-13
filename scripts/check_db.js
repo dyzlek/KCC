@@ -1,24 +1,14 @@
-const pool = require("./src/db/db");
-require("dotenv").config();
+const db = require('../src/db/db');
 
 async function checkSchema() {
     try {
-        const [rows] = await pool.execute("DESCRIBE users");
-        console.log("Columns in users table:");
-        rows.forEach(row => console.log(`- ${row.Field} (${row.Type})`));
-        
-        const hasInfoPublic = rows.some(row => row.Field === "info_public");
-        if (!hasInfoPublic) {
-            console.log("Adding info_public column...");
-            await pool.execute("ALTER TABLE users ADD COLUMN info_public BOOLEAN NOT NULL DEFAULT FALSE");
-            console.log("Column added successfully.");
-        } else {
-            console.log("info_public column already exists.");
-        }
+        const [rows] = await db.execute('DESCRIBE users');
+        console.log('--- USERS TABLE COLUMNS ---');
+        rows.forEach(r => console.log(`'${r.Field}'`));
+        process.exit(0);
     } catch (err) {
-        console.error("Error checking schema:", err);
-    } finally {
-        process.exit();
+        console.error('Failed to describe table:', err);
+        process.exit(1);
     }
 }
 

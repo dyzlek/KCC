@@ -1,5 +1,6 @@
-/* ── Contrôleur Auth ───────────────────────────────────────── */
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
+const mailService = require("../services/mail.service");
 let db;
 try { db = require("../db/db"); } catch (e) { db = null; }
 
@@ -89,4 +90,97 @@ exports.oauthCallback = (req, res) => {
         });
     }
     res.redirect("/");
+};
+
+exports.forgotPasswordPage = (req, res) => {
+    res.render("forgot-password.njk", { title: "Forgot Password — KC Catalogue" });
+};
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.render("forgot-password.njk", { error: "Email is required." });
+        }
+
+        if (!db) {
+            return res.render("forgot-password.njk", { error: "Database not connected." });
+        }
+
+        const [rows] = await db.execute("SELECT id FROM users WHERE email = ?", [email]);
+        if (rows.length === 0) {
+            // Security: don't reveal if user exists, but here for UX we can be helpful or silent
+            return res.render("forgot-password.njk", { success: "If that email is in our system, you will receive a reset link shortly." });
+        }
+
+        const token = crypto.randomBytes(20).toString('hex');
+        const expires = new Date(Date.now() + 3600000); // 1 hour from now
+
+        await db.execute(
+            "UPDATE users SET reset_token = ?, reset_expires = ? WHERE email = ?",
+            [token, expires, email]
+        );
+
+        const resetLink = `${req.protocol}://${req.get('host')}/reset-password/${token}`;
+        await mailService.sendResetEmail(email, resetLink);
+
+        res.render("forgot-password.njk", { success: "If that email is in our system, you will receive a reset link shortly." });
+    } catch (err) {
+        console.error("Forgot password error:", err);
+        res.render("forgot-password.njk", { error: "An error occurred. Please try again later." });
+    }
+};
+
+exports.resetPasswordPage = async (req, res) => {
+    try {
+        const { token } = req.params;
+        if (!db) return res.redirect("/login");
+
+        const [rows] = await db.execute(
+            "SELECT id FROM users WHERE reset_token = ? AND reset_expires > NOW()",
+            [token]
+        );
+
+        if (rows.length === 0) {
+            return res.render("forgot-password.njk", { error: "Password reset token is invalid or has expired." });
+        }
+
+        res.render("reset-password.njk", { title: "Reset Password — KC Catalogue", token });
+    } catch (err) {
+        console.error("Reset password page error:", err);
+        res.redirect("/login");
+    }
+};
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password, confirm_password } = req.body;
+
+        if (password !== confirm_password) {
+            return res.render("reset-password.njk", { token, error: "Passwords do not match." });
+        }
+
+        if (!db) return res.redirect("/login");
+
+        const [rows] = await db.execute(
+            "SELECT id FROM users WHERE reset_token = ? AND reset_expires > NOW()",
+            [token]
+        );
+
+        if (rows.length === 0) {
+            return res.render("forgot-password.njk", { error: "Password reset token is invalid or has expired." });
+        }
+
+        const hash = await bcrypt.hash(password, 10);
+        await db.execute(
+            "UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?",
+            [hash, rows[0].id]
+        );
+
+        res.render("auth.njk", { mode: "login", success: "Your password has been reset. You can now log in." });
+    } catch (err) {
+        console.error("Reset password error:", err);
+        res.render("reset-password.njk", { token, error: "An error occurred. Please try again later." });
+    }
 };

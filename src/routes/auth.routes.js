@@ -15,4 +15,10 @@ const passport = require("passport");
 router.get("/auth/steam", passport.authenticate("steam"));
 router.get("/auth/steam/callback", passport.authenticate("steam", { failureRedirect: "/login" }), auth.oauthCallback);
 
+// --- Forgot Password ---
+router.get("/forgot-password", auth.forgotPasswordPage);
+router.post("/forgot-password", auth.forgotPassword);
+router.get("/reset-password/:token", auth.resetPasswordPage);
+router.post("/reset-password/:token", auth.resetPassword);
+
 module.exports = router;
