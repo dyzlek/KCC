@@ -574,8 +574,27 @@ function getPlatforms() {
     return PLATFORMS;
 }
 
+// ── Get famous games for Quizz (with screenshots) ───────────
+async function getFamousGamesForQuizz(limit = 20, offset = 0) {
+    const data = await igdbRequest(
+        "games",
+        `fields name, screenshots.image_id;
+         where total_rating_count > 200 & screenshots != null;
+         sort total_rating_count desc;
+         limit ${limit};
+         offset ${offset};`
+    );
+    if (!data || !Array.isArray(data)) return [];
+    return data.map(g => ({
+        id: g.id,
+        name: g.name,
+        screenshot: (g.screenshots && g.screenshots.length > 0) ? coverUrl(g.screenshots[Math.floor(Math.random() * g.screenshots.length)].image_id, "screenshot_big") : null
+    })).filter(g => g.screenshot);
+}
+
 module.exports = {
     getPopularGames,
+    getFamousGamesForQuizz,
     getGames,
     getNewGames,
     searchGames,

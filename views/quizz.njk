@@ -1,0 +1,284 @@
+{% extends "layout.njk" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto py-10 px-4">
+    <!-- Landing State -->
+    <div id="landing-container" class="{% if not landing %}hidden{% endif %}">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <!-- Left: Hero Text -->
+            <div class="text-left">
+                <div class="mb-6 inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 text-primary text-xs font-black uppercase tracking-widest">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                    Challenge Active
+                </div>
+                <h1 class="text-6xl font-black text-white mb-6 leading-tight">Guess the <span class="text-primary italic">Game</span></h1>
+                <p class="text-xl text-text-muted mb-10 max-w-lg leading-relaxed">Identity famous titles from a single screenshot. The challenge intensifies as you score: more choices, less room for error. Are you a true gaming expert?</p>
+                
+                <div class="flex flex-wrap items-center gap-6">
+                    <button onclick="startGame()" class="group relative px-12 py-6 bg-primary hover:bg-primary/90 text-white rounded-[2rem] font-black text-xl uppercase tracking-widest transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-primary/40">
+                        <span class="relative z-10 flex items-center gap-3">
+                            Start Quiz <span class="material-icons group-hover:translate-x-1 transition-transform">play_arrow</span>
+                        </span>
+                    </button>
+                    
+                    <div class="flex items-center gap-4 bg-card-bg/50 backdrop-blur-sm px-6 py-4 rounded-3xl border border-white/5">
+                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-primary">
+                            <span class="material-icons">emoji_events</span>
+                        </div>
+                        <div>
+                            <span class="text-[10px] uppercase font-black text-text-muted block tracking-widest">Personal Best</span>
+                            <span class="text-xl font-black text-white">{{ stats.best or '0' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Leaderboard -->
+            <div class="bg-card-bg rounded-[3rem] p-8 border border-white/5 shadow-2xl relative overflow-hidden">
+                <!-- Background decor -->
+                <div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 blur-[100px] rounded-full"></div>
+                
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-2xl font-black text-white flex items-center gap-3">
+                            <span class="material-icons text-primary">leaderboard</span> Top Players
+                        </h2>
+                        <span class="text-[10px] font-black text-text-muted uppercase tracking-widest">Global Hall of Fame</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        {% if leaderboard and leaderboard.length > 0 %}
+                            {% for entry in leaderboard %}
+                            <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-colors group">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs 
+                                        {% if loop.index == 1 %}bg-yellow-500 text-black
+                                        {% elif loop.index == 2 %}bg-slate-300 text-black
+                                        {% elif loop.index == 3 %}bg-orange-500 text-white
+                                        {% else %}bg-white/10 text-text-muted{% endif %}">
+                                        {{ loop.index }}
+                                    </div>
+                                    <div class="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center overflow-hidden border border-white/5">
+                                        {% if entry.avatar_url %}
+                                            <img src="{{ entry.avatar_url }}" alt="" class="w-full h-full object-cover">
+                                        {% else %}
+                                            <span class="text-xs font-black text-primary">{{ entry.username[0] | upper }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <span class="font-bold text-white group-hover:text-primary transition-colors truncate max-w-[120px]">{{ entry.username }}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-black text-text-muted uppercase tracking-tighter">pts</span>
+                                    <span class="text-xl font-black text-white">{{ entry.score }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-10 opacity-50 italic">
+                                Be the first to enter the hall of fame!
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game State (Hidden initially) -->
+    <div id="game-container" class="hidden">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-black text-white mb-2 leading-tight">Identify the Game</h1>
+            <div class="flex items-center justify-center gap-6">
+                <div class="bg-card-bg px-5 py-3 rounded-2xl border border-white/5 flex flex-col items-center">
+                    <span class="text-[10px] uppercase font-black text-text-muted block">Score</span>
+                    <span id="score-display" class="text-2xl font-black text-primary">0</span>
+                </div>
+                <div class="bg-card-bg px-5 py-3 rounded-2xl border border-white/5 flex flex-col items-center">
+                    <span class="text-[10px] uppercase font-black text-text-muted block">Difficulty</span>
+                    <span id="difficulty-display" class="text-xs font-bold text-green-400">Easy (4 choices)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Game Card -->
+        <div class="bg-card-bg rounded-[2.5rem] overflow-hidden border border-white/5 shadow-2xl relative">
+            <div class="aspect-video relative overflow-hidden bg-black/40 group">
+                <img id="game-screenshot" src="" alt="Screenshot" class="w-full h-full object-cover transition-all duration-700 blur-[30px] opacity-0">
+                
+                <div id="feedback-overlay" class="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 pointer-events-none z-20">
+                    <div id="feedback-icon" class="w-32 h-32 rounded-full flex items-center justify-center text-white text-6xl shadow-2xl">
+                        <span class="material-icons text-7xl">check_circle</span>
+                    </div>
+                </div>
+                
+                <div id="image-loader" class="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+                    <div class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                </div>
+
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+            </div>
+
+            <div class="p-10">
+                <div id="choices-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Choices injected here -->
+                </div>
+
+                <div id="next-container" class="mt-10 flex justify-center opacity-0 pointer-events-none transition-opacity">
+                    <button id="next-btn" onclick="loadNext()" class="bg-primary hover:bg-primary/90 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-primary/20 flex items-center gap-3 transition-transform hover:scale-105">
+                        Next Round <span class="material-icons">arrow_forward</span>
+                    </button>
+                    <button id="restart-btn" onclick="location.reload()" class="hidden bg-white/10 hover:bg-white/20 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest flex items-center gap-3 transition-transform hover:scale-105">
+                         Try Again <span class="material-icons">refresh</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .choice-btn.correct {
+        background-color: rgba(34, 197, 94, 0.2) !important;
+        border-color: #22c55e !important;
+        color: #22c55e !important;
+        transform: scale(1.02);
+    }
+    .choice-btn.wrong {
+        background-color: rgba(239, 68, 68, 0.2) !important;
+        border-color: #ef4444 !important;
+        color: #ef4444 !important;
+        opacity: 0.5;
+    }
+    .animate-feedback {
+        animation: pulse-feedback 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes pulse-feedback {
+        0% { transform: scale(0.5); opacity: 0; }
+        50% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentCorrect = "";
+    let score = 0;
+    let isAnswered = false;
+
+    // Scale: 4 choices, then 6, then 9, then 12
+    function getDifficulty(s) {
+        if (s >= 10) return { limit: 12, label: "EXPERT (12 choices)", color: "text-red-500", grid: "sm:grid-cols-2 lg:grid-cols-4" };
+        if (s >= 6) return { limit: 9, label: "HARD (9 choices)", color: "text-orange-500", grid: "sm:grid-cols-2 lg:grid-cols-3" };
+        if (s >= 2) return { limit: 6, label: "NORMAL (6 choices)", color: "text-yellow-400", grid: "sm:grid-cols-2 lg:grid-cols-3" };
+        return { limit: 4, label: "EASY (4 choices)", color: "text-green-400", grid: "sm:grid-cols-2" };
+    }
+
+    async function startGame() {
+        document.getElementById('landing-container').classList.add('hidden');
+        document.getElementById('game-container').classList.remove('hidden');
+        loadNext();
+    }
+
+    async function saveScore(finalScore) {
+        try {
+            await fetch('/quizz/save-score', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ score: finalScore })
+            });
+        } catch (e) { console.error("Score save error", e); }
+    }
+
+    function checkAnswer(btn, choice) {
+        if (isAnswered) return;
+        isAnswered = true;
+
+        const overlay = document.getElementById('feedback-overlay');
+        const iconContainer = document.getElementById('feedback-icon');
+        const iconSpan = iconContainer.querySelector('.material-icons');
+        
+        if (choice === currentCorrect) {
+            btn.classList.add('correct', 'shadow-lg', 'shadow-green-500/20');
+            score++;
+            document.getElementById('score-display').innerText = score;
+            
+            overlay.classList.remove('opacity-0');
+            iconContainer.className = "w-32 h-32 rounded-full flex items-center justify-center text-white text-6xl shadow-2xl bg-green-500/90 animate-feedback";
+            iconSpan.innerText = "check_circle";
+
+            document.getElementById('next-btn').classList.remove('hidden');
+            document.getElementById('restart-btn').classList.add('hidden');
+        } else {
+            btn.classList.add('wrong');
+            const btns = document.querySelectorAll('.choice-btn');
+            btns.forEach(b => {
+                if (b.innerText.trim() === currentCorrect) {
+                    b.classList.add('correct');
+                }
+            });
+            
+            overlay.classList.remove('opacity-0');
+            iconContainer.className = "w-32 h-32 rounded-full flex items-center justify-center text-white text-6xl shadow-2xl bg-red-500/90 animate-feedback";
+            iconSpan.innerText = "cancel";
+            
+            saveScore(score); // Save the high score on defeat
+
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('restart-btn').classList.remove('hidden');
+        }
+
+        document.getElementById('next-container').classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    async function loadNext() {
+        isAnswered = false;
+        document.getElementById('next-container').classList.add('opacity-0', 'pointer-events-none');
+        document.getElementById('feedback-overlay').classList.add('opacity-0');
+        document.getElementById('image-loader').classList.remove('hidden');
+        
+        const diff = getDifficulty(score);
+        const diffDisplay = document.getElementById('difficulty-display');
+        diffDisplay.innerText = diff.label;
+        diffDisplay.className = `text-xs font-bold ${diff.color}`;
+
+        const img = document.getElementById('game-screenshot');
+        img.classList.add('blur-[30px]', 'opacity-0');
+
+        try {
+            const res = await fetch(`/quizz/next?limit=${diff.limit}`);
+            const data = await res.json();
+            
+            if (data.error) return alert(data.error);
+
+            currentCorrect = data.game.name;
+            
+            // Preload image
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                img.src = data.game.screenshot;
+                img.classList.remove('blur-[30px]', 'opacity-0');
+                document.getElementById('image-loader').classList.add('hidden');
+            };
+            tempImg.src = data.game.screenshot;
+            
+            // Build choices
+            const grid = document.getElementById('choices-grid');
+            grid.className = `grid grid-cols-1 ${diff.grid} gap-4`;
+
+            grid.innerHTML = data.choices.map(c => `
+                <button onclick="checkAnswer(this, '${c.replace(/'/g, "\\'")}')" 
+                        class="choice-btn px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-white font-bold transition-all hover:scale-[1.02] active:scale-[0.98] text-center text-xs md:text-sm">
+                    ${c}
+                </button>
+            `).join('');
+
+        } catch (err) {
+            console.error("Failed to load next game:", err);
+        }
+    }
+</script>
+{% endblock %}

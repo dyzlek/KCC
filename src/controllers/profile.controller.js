@@ -38,7 +38,8 @@ async function calculateStats(userId) {
         reviews_count: 0,
         wishlist_count: 0,
         reports_count: 0,
-        higher_lower_best: 0
+        higher_lower_best: 0,
+        rpg_count: 0
     };
 
     // Get Collection Stats
@@ -102,6 +103,17 @@ async function calculateStats(userId) {
         stats.higher_lower_best = hlScoreResult[0][0].best || 0;
     }
 
+    // Get RPG Count for Expert RPG Badge
+    const rpgCountResult = await safeQuery(
+        `SELECT COUNT(*) as count FROM collections c 
+         JOIN games g ON c.game_id = g.id 
+         WHERE c.user_id = ? AND (g.genres LIKE '%RPG%' OR g.genres LIKE '%Role-playing%')`,
+        [userId]
+    );
+    if (rpgCountResult && rpgCountResult[0]) {
+        stats.rpg_count = rpgCountResult[0][0].count;
+    }
+
     return stats;
 }
 
@@ -144,6 +156,28 @@ function calculateBadges(stats) {
     // Higher Lower Badge
     if (stats.higher_lower_best > 0) {
         badges.push({ name: "Higher Lower Player", icon: "trending_up", color: "text-indigo-400", description: "Played the Higher or Lower game" });
+    }
+
+    // --- NEW BADGES ---
+    
+    // Reviewer de Bronze (5 reviews)
+    if (stats.reviews_count >= 5) {
+        badges.push({ name: "Reviewer de Bronze", icon: "emoji_events", color: "text-orange-400", description: "Written 5+ reviews" });
+    }
+
+    // Expert RPG (20+ RPGs)
+    if (stats.rpg_count >= 20) {
+        badges.push({ name: "Expert RPG", icon: "fireplace", color: "text-red-500", description: "20+ RPGs in collection" });
+    }
+
+    // Ancien (Account > 1 year)
+    if (stats.created_at) {
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        const createdAt = new Date(stats.created_at);
+        if (createdAt <= oneYearAgo) {
+            badges.push({ name: "Ancien", icon: "history_edu", color: "text-yellow-600", description: "Member for over a year" });
+        }
     }
 
     return badges;
@@ -351,6 +385,7 @@ exports.publicPage = async (req, res) => {
         }
 
         const stats = await calculateStats(userId);
+        stats.created_at = profileUser.created_at;
         const followCounts = await followController.getFollowCounts(userId);
         
         // Steam data

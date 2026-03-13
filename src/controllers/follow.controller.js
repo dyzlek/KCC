@@ -37,18 +37,20 @@ exports.toggleFollow = [requireAuth, async (req, res) => {
 
         if (existing.length > 0) {
             // Unfollow
-            await safeQuery("DELETE FROM follows WHERE follower_id = ? AND following_id = ?",
+            const [result] = await db.execute("DELETE FROM follows WHERE follower_id = ? AND following_id = ?",
                 [currentUserId, targetUserId]);
+            console.log(`User ${currentUserId} unfollowed ${targetUserId}`);
             return res.json({ success: true, action: "unfollowed" });
         } else {
             // Follow
-            await safeQuery("INSERT INTO follows (follower_id, following_id) VALUES (?, ?)",
+            await db.execute("INSERT INTO follows (follower_id, following_id) VALUES (?, ?)",
                 [currentUserId, targetUserId]);
+            console.log(`User ${currentUserId} followed ${targetUserId}`);
             return res.json({ success: true, action: "followed" });
         }
     } catch (err) {
         console.error("Error toggling follow:", err);
-        res.status(500).json({ error: "Database error" });
+        res.status(500).json({ error: "Failed to perform follow action", details: err.message });
     }
 }];
 
