@@ -16,3 +16,6 @@ Thumbs.db
 # IDEs
 .vscode/
 .idea/
+
+# Uploads
+public/uploads/

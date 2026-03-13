@@ -1,6 +1,7 @@
 /* ── Contrôleur Admin ──────────────────────────────────────── */
 let db;
 try { db = require("../db/db"); } catch (e) { db = null; }
+const fileService = require("../services/file.service");
 
 // Middleware : vérifier admin
 function requireAdmin(req, res, next) {
@@ -148,6 +149,15 @@ exports.deleteUser = [requireAdmin, async (req, res) => {
     const [rows] = await safeQuery("SELECT username, email FROM users WHERE id = ?", [req.params.id]);
     const username = rows[0]?.username || `User #${req.params.id}`;
     const email = rows[0]?.email || '';
+    
+    // Fetch user files before deletion
+    const [userRows] = await safeQuery("SELECT avatar_url, banner_url FROM users WHERE id = ?", [req.params.id]);
+    if (userRows.length > 0) {
+        const { avatar_url, banner_url } = userRows[0];
+        fileService.deleteLocalFile(avatar_url);
+        fileService.deleteLocalFile(banner_url);
+    }
+
     await safeQuery("DELETE FROM users WHERE id = ?", [req.params.id]);
     await logAction(req.session.user.id, 'delete_user', null, null, `Deleted account: ${username} (${email})`);
     res.redirect("/admin?tab=users");

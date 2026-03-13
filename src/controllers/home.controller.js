@@ -156,3 +156,11 @@ exports.platform = async (req, res) => {
     const platformId = req.params.id;
     res.redirect(`/?platforms=${platformId}`);
 };
+
+exports.terms = (req, res) => {
+    res.render("terms.njk", { title: "Terms of Service — KC Catalogue", user: req.session.user });
+};
+
+exports.privacy = (req, res) => {
+    res.render("privacy.njk", { title: "Privacy Policy — KC Catalogue", user: req.session.user });
+};

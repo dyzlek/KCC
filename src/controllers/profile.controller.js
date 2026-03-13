@@ -4,6 +4,7 @@ let db;
 try { db = require("../db/db"); } catch (e) { db = null; }
 const followController = require("./follow.controller");
 const steamService = require("../services/steam.service");
+const fileService = require("../services/file.service");
 
 // Helper: safely execute DB query, return empty result on error
 async function safeQuery(query, params) {
@@ -283,9 +284,15 @@ exports.update = [requireAuth, async (req, res) => {
 
         if (req.files) {
             if (req.files.avatar) {
+                if (avatarUrl && avatarUrl !== "/uploads/" + req.files.avatar[0].filename) {
+                    fileService.deleteLocalFile(avatarUrl);
+                }
                 avatarUrl = "/uploads/" + req.files.avatar[0].filename;
             }
             if (req.files.banner) {
+                if (bannerUrl && bannerUrl !== "/uploads/" + req.files.banner[0].filename) {
+                    fileService.deleteLocalFile(bannerUrl);
+                }
                 bannerUrl = "/uploads/" + req.files.banner[0].filename;
             }
         }
@@ -457,8 +464,15 @@ exports.deleteAccount = [requireAuth, async (req, res) => {
     try {
         const userId = req.session.user.id;
 
+        // Fetch user files before deletion
+        const [userRows] = await safeQuery("SELECT avatar_url, banner_url FROM users WHERE id = ?", [userId]);
+        if (userRows.length > 0) {
+            const { avatar_url, banner_url } = userRows[0];
+            fileService.deleteLocalFile(avatar_url);
+            fileService.deleteLocalFile(banner_url);
+        }
+
         // Cascading delete should handle related data (reviews, collections, etc.)
-        // But for safety/clarity we rely on foreign keys ON DELETE CASCADE which were set in database.sql
         await safeQuery("DELETE FROM users WHERE id = ?", [userId]);
 
         req.session.destroy(() => {
